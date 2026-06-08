@@ -52,3 +52,6 @@ android/key.properties
 android/*.jks
 android/upload-keystore.jks
 android/keystore-password.txt
+
+# Local release bundles (source in play-store/ folder name only)
+play-store/*.aab

@@ -1,0 +1,49 @@
+Echo — Store Listing (English — United States)
+==============================================
+
+【Short description】max 80 characters
+A gentle local-first journal for words, mood, photos—no account needed.
+
+(68 characters)
+
+---
+
+【Full description】max 4000 characters — copy & paste
+
+Echo is a gentle personal journal app—quietly capture the moment, revisit it later as an echo.
+
+✦ Local-first & private
+No account required. Entries, photos, tasks, and settings stay on your device by default—not on our servers. No social feed, no public sharing.
+
+✦ Capture the moment
+• Echoes: journal with photos, weather & mood
+• Drift bottle: open a random past entry
+• Mood books: browse by year and mood
+• Photo wall: weekly/monthly grids, export images
+
+✦ Gentle reminders
+• Tasks with reminders & repeats
+• Letters to the future: deliver on a chosen date
+• Important days: birthdays & anniversaries
+
+✦ Echo Tree & stats
+Track growth, collect charms, and explore mood trends over time.
+
+✦ Echo Plus (optional)
+Unlock all photo wall and stationery skins via Google Play subscription or lifetime purchase. Core journaling, tasks, export, and app lock stay free.
+
+Summaries and keywords are generated on-device—no external AI.
+
+Questions or feedback? vivida51888@gmail.com
+
+Privacy policy: https://vivida51888-source.github.io/echo-app/privacy.html
+
+---
+
+【Release notes】v1.0.0 — Initial release
+
+• First public release of Echo
+• Local journal, tasks, future letters & important days
+• Photo wall, Echo Tree & mood statistics
+• App lock & backup/export
+• Echo Plus for optional premium skins

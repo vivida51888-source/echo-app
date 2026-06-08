@@ -1,0 +1,34 @@
+Echo — 商店截图说明（需你在真机或模拟器上截取）
+==================================================
+
+Play Console 要求（2026 常见规则）：
+- 手机：至少 2 张，最多 8 张
+- 建议比例：9:16 竖屏（如 1080×1920 或 1440×2560）
+- 格式：PNG 或 JPEG，每张最大 8 MB
+- 功能图 1024×500：已准备在 play-store/feature-graphic-1024x500.png
+
+【推荐截取的 6 个画面】保存到 play-store/screenshots/ 文件夹
+
+1. home.png — 首页 / 主界面（展示 Echo 品牌与入口）
+2. write-diary.png — 写日记页（文字 + 心情天气）
+3. diary-list.png — 回响列表 / 心情之书
+4. photo-wall.png — 照片墙
+5. todo.png — 待办列表
+6. settings-privacy.png — 设置 → 数据与隐私（展示合规与本地优先）
+
+【如何截图】
+方式 A — 真机：
+  安装 Release 包 → 电源键 + 音量下 → 将图片传到电脑
+
+方式 B — Android 模拟器（Android Studio）：
+  1. 运行 flutter run --release 或安装 AAB
+  2. 模拟器右侧相机图标 → Save screenshot
+  3. 保存到 play-store/screenshots/
+
+方式 C — adb：
+  adb exec-out screencap -p > play-store/screenshots/home.png
+
+【注意】
+- 截图中不要含虚假评分或「#1」等宣传语（Play 政策）
+- 可用中文或英文界面；若面向多地区可各准备一套
+- 平板截图可选（Echo 未专门适配平板可暂不提交）

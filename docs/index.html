@@ -3,336 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Echo — Privacy Policy / 隐私政策</title>
+  <title>Echo — Legal &amp; Support</title>
   <style>
     :root {
       --bg: #f7f5f0;
       --surface: #fffdf9;
       --text: #2c2824;
       --muted: #6b6560;
-      --whisper: #9a948c;
       --accent: #8b7355;
       --border: rgba(44, 40, 36, 0.1);
-      --max: 720px;
+      --max: 560px;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.7;
-      font-size: 16px;
-      font-weight: 400;
-    }
-
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 2.5rem 1.5rem 2rem;
+      padding: 2rem 1.5rem;
       text-align: center;
     }
-
-    header h1 {
-      margin: 0 0 0.35rem;
-      font-size: 1.75rem;
-      font-weight: 300;
-      letter-spacing: 0.04em;
-    }
-
-    header p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-      font-weight: 300;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1rem 1.5rem;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    nav a {
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 0.9rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-    }
-
-    nav a:hover {
-      border-color: var(--border);
-      background: var(--bg);
-    }
-
-    main {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 2rem 1.5rem 4rem;
-    }
-
-    section {
-      margin-bottom: 3rem;
-      scroll-margin-top: 4rem;
-    }
-
-    section > h2 {
-      font-size: 1.35rem;
-      font-weight: 400;
-      margin: 0 0 0.25rem;
-      letter-spacing: 0.02em;
-    }
-
-    .lang-tag {
-      display: inline-block;
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--whisper);
-      margin-bottom: 1.25rem;
-    }
-
-    .card {
+    h1 { font-size: 2rem; font-weight: 300; letter-spacing: 0.06em; margin: 0 0 0.5rem; }
+    .tagline { color: var(--muted); margin: 0 0 2.5rem; font-weight: 300; }
+    .links { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: var(--max); }
+    a.card {
+      display: block;
+      padding: 1.1rem 1.25rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 1.25rem 1.35rem;
-      margin-bottom: 1rem;
-    }
-
-    .card h3 {
-      margin: 0 0 0.6rem;
+      color: var(--accent);
+      text-decoration: none;
       font-size: 1rem;
-      font-weight: 500;
-      color: var(--text);
+      transition: border-color 0.15s;
     }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    ul {
-      margin: 0.5rem 0 0;
-      padding-left: 1.2rem;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    li { margin-bottom: 0.35rem; }
-
-    .meta {
-      font-size: 0.85rem;
-      color: var(--whisper);
-      margin-top: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem 1.5rem;
-      color: var(--whisper);
-      font-size: 0.85rem;
-      border-top: 1px solid var(--border);
-    }
-
+    a.card:hover { border-color: var(--accent); }
+    a.card span { display: block; color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+    footer { margin-top: 3rem; color: var(--muted); font-size: 0.85rem; }
     footer a { color: var(--accent); }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Echo</h1>
-    <p>Privacy Policy · 隐私政策</p>
-  </header>
+  <h1>Echo</h1>
+  <p class="tagline">温柔记录此刻与回响 · A gentle local-first journal</p>
 
-  <nav>
-    <a href="#zh">中文</a>
-    <a href="#en">English</a>
-    <a href="#contact">Contact</a>
-  </nav>
-
-  <main>
-    <!-- ── 中文 ─────────────────────────────────────────── -->
-    <section id="zh">
-      <h2>隐私政策</h2>
-      <div class="lang-tag">简体中文</div>
-
-      <div class="card">
-        <h3>本地优先</h3>
-        <p>
-          无需注册账号，默认不上传日记到服务器。日记、图片、待办、信件、重要日及各项设置，
-          均存放在应用私有目录，仅本应用可访问。
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>存储内容</h3>
-        <ul>
-          <li>回响：正文、心情天气、时间、本地关键词与摘要</li>
-          <li>图片：你选择添加的副本（应用私有目录）</li>
-          <li>草稿：未完成的写作</li>
-          <li>待办：内容、状态、提醒与重复规则</li>
-          <li>给未来的信：正文、日期与开启状态</li>
-          <li>重要日：名称、日期、备注与提醒</li>
-          <li>回响之树：进度等本地状态</li>
-          <li>设置：纸色、照片墙材质等偏好</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>我们不会</h3>
-        <ul>
-          <li>出售或出租你的个人数据</li>
-          <li>将日记用于广告或用户画像</li>
-          <li>未经你操作批量上传内容</li>
-          <li>向第三方共享可识别身份的私人记录</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>可能使用的权限</h3>
-        <ul>
-          <li>通知（可选）：待办、未来来信、重要日提醒</li>
-          <li>相册 / 相机（可选）：添加图片、自定义照片墙；导出图片到相册需授权</li>
-          <li>时区：在本地正确触发提醒</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>摘要与统计</h3>
-        <p>
-          日记关键词与摘要在设备端用本地规则生成，不调用外部大模型。
-          心情统计与待办数据同样只在本地计算，不上传。
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>删除数据</h3>
-        <p>
-          可在应用内逐条删除回响、待办、信件与重要日。
-          卸载应用会清除本机全部数据（含图片与数据库）。
-          卸载前请自行备份需要保留的内容。
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>说明更新</h3>
-        <p>
-          功能变更时可能更新本说明，重要变更会在应用内提示。
-          最近更新：2026 年 5 月。
-        </p>
-      </div>
-
-      <p class="meta">Echo 用于记录文字、心情与照片，数据默认保存在本机。</p>
-    </section>
-
-    <!-- ── English ──────────────────────────────────────── -->
-    <section id="en">
-      <h2>Privacy Policy</h2>
-      <div class="lang-tag">English</div>
-
-      <div class="card">
-        <h3>Local-first</h3>
-        <p>
-          No account is required. By default, your journal entries are not uploaded to any server.
-          Diaries, photos, to-dos, letters, important days, and app settings are stored in the
-          app’s private storage and are accessible only to Echo on your device.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>What we store on your device</h3>
-        <ul>
-          <li>Echoes (journal): text, mood/weather, timestamps, locally generated keywords and summaries</li>
-          <li>Photos: copies of images you choose to add (app private directory)</li>
-          <li>Drafts: unfinished writing sessions</li>
-          <li>To-dos: content, status, reminders, and repeat rules</li>
-          <li>Letters to the future: body text, scheduled date, and enabled state</li>
-          <li>Important days: name, date, notes, and reminders</li>
-          <li>Echo Tree: local progress and collectible state</li>
-          <li>Settings: appearance, photo wall style, and other preferences</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>What we do not do</h3>
-        <ul>
-          <li>Sell or rent your personal data</li>
-          <li>Use your journal for advertising or profiling</li>
-          <li>Batch-upload your content without your action</li>
-          <li>Share personally identifiable private records with third parties</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>Permissions we may request</h3>
-        <ul>
-          <li>Notifications (optional): to-do, future letter, and important-day reminders</li>
-          <li>Photos / Camera (optional): add images, customize the photo wall; saving exports to the gallery requires permission</li>
-          <li>Time zone: to schedule local reminders correctly</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>Summaries &amp; statistics</h3>
-        <p>
-          Keywords and summaries are generated on your device using local rules—not by external
-          large language models. Mood statistics and to-do insights are also computed locally and
-          are not uploaded.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Deleting your data</h3>
-        <p>
-          You can delete individual echoes, to-dos, letters, and important days inside the app.
-          Uninstalling Echo removes all on-device data, including images and databases.
-          Please back up anything you wish to keep before uninstalling.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Updates to this policy</h3>
-        <p>
-          We may update this policy when features change. Material changes will be communicated
-          in the app when possible. Last updated: May 2026.
-        </p>
-      </div>
-
-      <p class="meta">
-        Echo is a personal journal for text, mood, and photos. Your data stays on your device by default.
-      </p>
-    </section>
-
-    <!-- ── Contact ──────────────────────────────────────── -->
-    <section id="contact">
-      <h2>Contact · 联系我们</h2>
-      <div class="card">
-        <p>
-          For privacy questions or feedback, please contact the developer via the app store listing
-          or email:
-          <br /><br />
-          <a href="mailto:vivida51888@gmail.com">vivida51888@gmail.com</a>
-        </p>
-      </div>
-    </section>
-  </main>
+  <div class="links">
+    <a class="card" href="privacy.html">
+      Privacy Policy
+      <span>隐私政策</span>
+    </a>
+    <a class="card" href="terms.html">
+      Terms of Service
+      <span>服务条款</span>
+    </a>
+    <a class="card" href="mailto:vivida51888@gmail.com">
+      Contact
+      <span>vivida51888@gmail.com</span>
+    </a>
+  </div>
 
   <footer>
-  Echo · v1.0.0 · Last updated May 2026 / 最近更新 2026 年 5 月
+    Echo v1.0.0 · Package com.vivida8.echo
   </footer>
 </body>
 </html>

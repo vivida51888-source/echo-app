@@ -9,7 +9,8 @@ abstract final class AppConfig {
       'https://vivida51888-source.github.io/echo-app/privacy.html';
 
   /// 服务条款公网地址（可选；应用内已有完整条款页）。
-  static const termsOfServiceUrl = '';
+  static const termsOfServiceUrl =
+      'https://vivida51888-source.github.io/echo-app/terms.html';
 
   static const supportEmail = 'vivida51888@gmail.com';
 }
