@@ -5,7 +5,7 @@ import '../models/future_letter.dart';
 import '../utils/diary_format.dart';
 import '../utils/future_letter_copy.dart';
 import 'future_letter_notification_service.dart';
-import 'echo_collectible_service.dart';
+import 'echo_reward_service.dart';
 import 'echo_tree_service.dart';
 
 class FutureLetterService extends ChangeNotifier {
@@ -101,7 +101,7 @@ class FutureLetterService extends ChangeNotifier {
     );
     await _save(letter);
     await FutureLetterNotificationService.instance.syncOne(letter);
-    await EchoCollectibleService.instance.grantTimeSeed(letter.id);
+    await EchoRewardService.instance.onFutureLetterSealed();
     notifyListeners();
     return letter;
   }
@@ -111,7 +111,25 @@ class FutureLetterService extends ChangeNotifier {
     if (index < 0) return;
     final letter = _items[index];
     if (letter.isOpened || !letter.isDue()) return;
+    await _markOpened(letter);
+  }
 
+  /// 消耗回响币提前拆信。
+  Future<bool> openEarly(String id) async {
+    final index = _items.indexWhere((l) => l.id == id);
+    if (index < 0) return false;
+    final letter = _items[index];
+    if (letter.isOpened || letter.isDue()) return false;
+
+    final cost = letter.earlyOpenCoinCost();
+    final paid = await EchoRewardService.instance.spendCoins(cost);
+    if (!paid) return false;
+
+    await _markOpened(letter);
+    return true;
+  }
+
+  Future<void> _markOpened(FutureLetter letter) async {
     final opened = letter.copyWith(openedAt: DateTime.now());
     await _save(opened);
     await FutureLetterNotificationService.instance.cancel(letter.id);

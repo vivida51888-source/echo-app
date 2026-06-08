@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../l10n/localized.dart';
 import '../models/todo_reminder.dart';
 import '../services/echo_insight_service.dart';
 import 'china_workday_calendar.dart';
@@ -25,6 +27,13 @@ enum TodoTimeHorizon {
 
   const TodoTimeHorizon(this.label);
   final String label;
+
+  String get localizedLabel => switch (this) {
+        TodoTimeHorizon.today => tr('今日', 'Today'),
+        TodoTimeHorizon.thisWeek => tr('本周', 'This week'),
+        TodoTimeHorizon.thisMonth => tr('本月', 'This month'),
+        TodoTimeHorizon.future => tr('未来', 'Future'),
+      };
 
   static const displayOrder = [
     TodoTimeHorizon.today,
@@ -73,14 +82,14 @@ abstract final class TodoSchedule {
   }
 
   static String horizonStatsTitle(TodoTimeHorizon horizon) => switch (horizon) {
-        TodoTimeHorizon.today => '今日概况',
-        TodoTimeHorizon.thisWeek => '本周概况',
-        TodoTimeHorizon.thisMonth => '本月概况',
-        TodoTimeHorizon.future => '未来概况',
+        TodoTimeHorizon.today => tr('今日概况', 'Today overview'),
+        TodoTimeHorizon.thisWeek => tr('本周概况', 'This week overview'),
+        TodoTimeHorizon.thisMonth => tr('本月概况', 'This month overview'),
+        TodoTimeHorizon.future => tr('未来概况', 'Future overview'),
       };
 
   static String horizonStatsSpanLabel(TodoTimeHorizon horizon) =>
-      horizon.label;
+      horizon.localizedLabel;
 
   static String horizonStatsRangeLabel(TodoTimeHorizon horizon, DateTime now) {
     final range = horizonStatsRange(horizon, now);
@@ -89,18 +98,31 @@ abstract final class TodoSchedule {
 
     if (end != null && start.isAfter(end)) {
       return switch (horizon) {
-        TodoTimeHorizon.thisWeek => '本周暂无更多安排',
-        TodoTimeHorizon.thisMonth => '${now.month} 月 · 暂无更多',
-        _ => '${start.month} 月 ${start.day} 日',
+        TodoTimeHorizon.thisWeek => tr('本周暂无更多安排', 'Nothing more this week'),
+        TodoTimeHorizon.thisMonth => tr(
+            '${now.month} 月 · 暂无更多',
+            "${DateFormat.MMM('en_US').format(now)} · nothing more",
+          ),
+        _ => isEnUi
+            ? DateFormat.MMMd('en_US').format(start)
+            : '${start.month} 月 ${start.day} 日',
       };
     }
     if (end != null && isSameDay(start, end)) {
-      return '${start.month} 月 ${start.day} 日';
+      return isEnUi
+          ? DateFormat.MMMd('en_US').format(start)
+          : '${start.month} 月 ${start.day} 日';
     }
     if (end != null) {
-      return '${start.month} 月 ${start.day} 日 – ${end.month} 月 ${end.day} 日';
+      return tr(
+        '${start.month} 月 ${start.day} 日 – ${end.month} 月 ${end.day} 日',
+        "${DateFormat.MMMd('en_US').format(start)} – ${DateFormat.MMMd('en_US').format(end)}",
+      );
     }
-    return '自 ${start.year} 年 ${start.month} 月 ${start.day} 日起';
+    return tr(
+      '自 ${start.year} 年 ${start.month} 月 ${start.day} 日起',
+      'From ${DateFormat.yMMMd('en_US').format(start)}',
+    );
   }
 
   static DateTime _addMonthsDateOnly(DateTime day, int months) {
@@ -394,7 +416,7 @@ abstract final class TodoSchedule {
   /// 顶栏当前视野的说明文案（与 [horizonStatsRangeLabel] 一致）。
   static String horizonSubtitle(TodoTimeHorizon horizon, DateTime now) {
     if (horizon == TodoTimeHorizon.future) {
-      return '${horizonStatsRangeLabel(horizon, now)} · 规划与目标';
+      return tr('${horizonStatsRangeLabel(horizon, now)} · 规划与目标', '${horizonStatsRangeLabel(horizon, now)} · Plans & goals');
     }
     return horizonStatsRangeLabel(horizon, now);
   }
@@ -406,6 +428,11 @@ abstract final class TodoSchedule {
   static String monthGroupLabel(String key) {
     final parts = key.split('-');
     if (parts.length != 2) return key;
-    return '${parts[0]} 年 ${int.parse(parts[1])} 月';
+    final year = int.parse(parts[0]);
+    final month = int.parse(parts[1]);
+    if (isEnUi) {
+      return DateFormat.yMMMM('en_US').format(DateTime(year, month));
+    }
+    return '$year 年 $month 月';
   }
 }

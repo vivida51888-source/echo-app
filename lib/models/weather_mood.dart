@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 天气风格心情，可选不选（未选时默认多云）。
 class WeatherMood {
-  const WeatherMood(this.emoji, this.label);
+  const WeatherMood(this.emoji, this.labelZh, this.labelEn);
 
   final String emoji;
-  final String label;
+  final String labelZh;
+  final String labelEn;
+
+  String get label => tr(labelZh, labelEn);
 
   String get display => '$emoji $label';
 
-  static const defaultMood = WeatherMood('⛅', '多云');
+  static const defaultMood = WeatherMood('⛅', '多云', 'Cloudy');
 
   static const List<WeatherMood> options = [
-    WeatherMood('☀️', '晴'),
+    WeatherMood('☀️', '晴', 'Sunny'),
     defaultMood,
-    WeatherMood('🌧', '小雨'),
-    WeatherMood('⛈', '大雨'),
-    WeatherMood('🌈', '彩虹'),
+    WeatherMood('🌧', '小雨', 'Drizzle'),
+    WeatherMood('⛈', '大雨', 'Storm'),
+    WeatherMood('🌈', '彩虹', 'Rainbow'),
   ];
 
   static WeatherMood? fromDisplay(String? value) {
     if (value == null || value.isEmpty) return null;
     for (final mood in options) {
       if (mood.display == value) return mood;
+      if (value.contains(mood.emoji)) return mood;
+      if (value.contains(mood.labelZh) || value.contains(mood.labelEn)) {
+        return mood;
+      }
     }
     return null;
   }
@@ -35,37 +44,33 @@ class WeatherMood {
   static WeatherMood resolve(String? value) =>
       fromDisplay(resolveDisplay(value)) ?? defaultMood;
 
-  /// 拍立得白边 / 染边用色。
   static Color tintColor(String? moodDisplay) {
-    switch (resolve(moodDisplay).label) {
-      case '晴':
+    switch (resolve(moodDisplay).emoji) {
+      case '☀️':
         return const Color(0xFFF8EDD8);
-      case '小雨':
+      case '🌧':
         return const Color(0xFFDCE6F0);
-      case '大雨':
+      case '⛈':
         return const Color(0xFFC8D4E4);
-      case '彩虹':
+      case '🌈':
         return const Color(0xFFF0E6F8);
-      case '多云':
-        return const Color(0xFFF1EBE3);
+      case '⛅':
       default:
         return const Color(0xFFF1EBE3);
     }
   }
 
-  /// 心情之书书脊色（当月主导情绪）。
   static Color spineColor(String? moodDisplay) {
-    switch (resolve(moodDisplay).label) {
-      case '晴':
+    switch (resolve(moodDisplay).emoji) {
+      case '☀️':
         return const Color(0xFFD4A84B);
-      case '小雨':
+      case '🌧':
         return const Color(0xFF6B9DC4);
-      case '大雨':
+      case '⛈':
         return const Color(0xFF4A6B8A);
-      case '彩虹':
+      case '🌈':
         return const Color(0xFFB892D4);
-      case '多云':
-        return const Color(0xFFB0A896);
+      case '⛅':
       default:
         return const Color(0xFFB0A896);
     }
@@ -73,7 +78,6 @@ class WeatherMood {
 
   static const emptySpineColor = Color(0xFFC8C4BC);
 
-  /// 统计圆环 / 横条用色。
   Color get chartColor => spineColor(display);
 
   static Color chartColorFor(String? moodDisplay) =>

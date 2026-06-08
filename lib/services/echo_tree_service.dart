@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../models/echo_tree_growth.dart';
 import '../models/echo_water_bubble.dart';
@@ -9,6 +10,7 @@ import '../utils/diary_format.dart';
 import '../utils/echo_bubble_layout.dart';
 import '../utils/todo_schedule.dart';
 import 'diary_service.dart';
+import 'echo_reward_service.dart';
 import 'todo_service.dart';
 
 /// 回响之树：写回响得雨露泡 → 收集 → 浇水成长。
@@ -372,8 +374,48 @@ class EchoTreeService extends ChangeNotifier {
     final add = storedWater;
     await _box?.put(_lifeWaterKey, lifeWater + add);
     await _box?.put(_storedWaterKey, 0);
+    await EchoRewardService.instance.onTreeActivity();
     notifyListeners();
     return true;
+  }
+
+  /// 情绪小铺：直接增加待浇雨露。
+  Future<void> grantShopStoredDew(int grams) async {
+    if (grams <= 0) return;
+    await _box?.put(_storedWaterKey, storedWater + grams);
+    notifyListeners();
+  }
+
+  /// 签到奖励：每日最多一颗能量泡。
+  Future<void> spawnCheckInBubble(int grams, {required String dayKey}) async {
+    await _grantBonusBubble(
+      rewardKey: 'checkin_$dayKey',
+      grams: grams,
+      layoutSeed: dayKey.hashCode,
+    );
+  }
+
+  /// 情绪小铺：在树旁生成一颗能量泡。
+  Future<void> spawnShopBubble(int grams) async {
+    if (grams <= 0) return;
+    final existing = List<EchoWaterBubble>.from(pendingBubbles);
+    final anchor = EchoBubbleLayout.pickAnchor(
+      seed: DateTime.now().microsecondsSinceEpoch,
+      existing: existing,
+    );
+    final bubble = EchoWaterBubble(
+      id: 'shop_${DateTime.now().microsecondsSinceEpoch}',
+      diaryId: 'shop_bonus_${DateTime.now().microsecondsSinceEpoch}',
+      grams: grams,
+      createdAt: DateTime.now(),
+      layoutSeed: DateTime.now().microsecondsSinceEpoch,
+      streakDays: 1,
+      anchorX: anchor.x,
+      anchorY: anchor.y,
+    );
+    existing.add(bubble);
+    await _saveBubbles(existing);
+    notifyListeners();
   }
 
   Future<void> refreshBubbles() async {
@@ -405,42 +447,49 @@ class EchoTreeService extends ChangeNotifier {
     final gap = daysSinceLastDiary;
 
     if (hasPendingBubbles) {
-      return '有 ${pendingBubbles.length} 滴雨露在树旁等你收集';
+      return tr('有 ${pendingBubbles.length} 滴雨露在树旁等你收集', '${pendingBubbles.length} dew drops waiting by the tree');
     }
     if (storedWater > 0) {
-      return '已收集 ${storedWater}g 雨露，点浇水让它长高';
+      return tr(
+        '已收集 ${storedWater}g 雨露，点浇水让它长高',
+        'Collected ${storedWater}g dew — tap to water and grow',
+      );
     }
 
     if (lifeWater == 0 && totalEntries == 0) {
-      return '写下第一篇回响，雨露就会落在树旁';
+      return tr(
+        '写下第一篇回响，雨露就会落在树旁',
+        'Write your first echo and dew will gather by the tree',
+      );
     }
 
     if (gap >= 4) {
-      return '已经 $gap 天没写回响了，它在轻轻等你';
+      return tr('已经 $gap 天没写回响了，它在轻轻等你', '$gap days without an echo — it waits gently');
     }
     if (gap >= 2) {
-      return '有 $gap 天没写，叶子微微耷下来了';
+      return tr('有 $gap 天没写，叶子微微耷下来了', '$gap days without writing — leaves droop a little');
     }
 
     final latest = DiaryService.instance.latestEntry;
     if (latest != null && DiaryFormat.isToday(latest.createdAt)) {
       if (writingStreak >= 2) {
-        return '连续 $writingStreak 天，今天的雨露更丰沛';
+        return tr('连续 $writingStreak 天，今天的雨露更丰沛', '$writingStreak-day streak — today\'s dew is richer');
       }
-      return '今天写过回响了，${g.stageLabel}在慢慢长高';
+      return tr('今天写过回响了，${g.stageLabel}在慢慢长高', 'Wrote today — ${g.stageLabel} grows slowly');
     }
 
     if (g.companionLabel != null) {
-      return '累计浇下 ${g.lifeWater}g 雨露，${g.companionLabel}';
+      return tr('累计浇下 ${g.lifeWater}g 雨露，${g.companionLabel}', '${g.lifeWater}g dew poured — ${g.companionLabel}');
     }
-    return '${g.stageLabel} · 累计 ${g.lifeWater}g 雨露';
+    return tr('${g.stageLabel} · 累计 ${g.lifeWater}g 雨露', '${g.stageLabel} · ${g.lifeWater}g dew total');
   }
 
   String? get nextStageHint {
     final g = growth;
     final remain = g.waterToNext;
     if (remain == null) return null;
-    return '再浇 $remain g，进入「${EchoTreeGrowthModel.stageLabel(g.stage + 1)}」';
+    final next = EchoTreeGrowthModel.stageLabel(g.stage + 1);
+    return tr('再浇 $remain g，进入「$next」', '$remain g more to reach «$next»');
   }
 
   int _streakEndingOn(DateTime date) {

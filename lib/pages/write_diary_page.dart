@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../models/weather_mood.dart';
 import '../services/diary_draft_service.dart';
 import '../services/diary_image_storage.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../pages/diary_stationery_page.dart';
 import '../services/diary_stationery_service.dart';
 import '../services/location_service.dart';
@@ -19,6 +22,7 @@ import '../utils/diary_format.dart';
 import '../utils/diary_write_chrome.dart';
 import '../widgets/diary_stationery_backdrop.dart';
 import '../widgets/echo_action_sheet.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/scale_tap.dart';
 
 class WriteDiaryPage extends StatefulWidget {
@@ -369,7 +373,7 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  '从相册选择',
+                  tr('从相册选择', 'Choose from gallery'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
@@ -384,7 +388,7 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  '拍照',
+                  tr('拍照', 'Take photo'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
@@ -506,27 +510,24 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
     final message = result.userMessage;
     if (message.isEmpty) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontWeight: FontWeight.w300),
-        ),
-        behavior: SnackBarBehavior.floating,
-        action: result.failure == LocationFailure.permissionDeniedForever ||
-                result.failure == LocationFailure.serviceDisabled
-            ? SnackBarAction(
-                label: '去设置',
-                onPressed: () {
-                  if (result.failure == LocationFailure.serviceDisabled) {
-                    LocationService.instance.openLocationSettings();
-                  } else {
-                    LocationService.instance.openPermissionSettings();
-                  }
-                },
-              )
-            : null,
-      ),
+    showEchoBriefHint(
+      context,
+      message: message,
+      tone: EchoBriefHintTone.gentle,
+      actionLabel: result.failure == LocationFailure.permissionDeniedForever ||
+              result.failure == LocationFailure.serviceDisabled
+          ? tr('去设置', 'Settings')
+          : null,
+      onAction: result.failure == LocationFailure.permissionDeniedForever ||
+              result.failure == LocationFailure.serviceDisabled
+          ? () {
+              if (result.failure == LocationFailure.serviceDisabled) {
+                LocationService.instance.openLocationSettings();
+              } else {
+                LocationService.instance.openPermissionSettings();
+              }
+            }
+          : null,
     );
   }
 
@@ -562,15 +563,10 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
 
     final content = _contentController.text.trim();
     if (content.isEmpty && _imagePaths.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '写点文字，或添加一张照片',
-            style: TextStyle(fontWeight: FontWeight.w300),
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: EchoColors.nightSurface,
-        ),
+      showEchoBriefHint(
+        context,
+        message: tr('写点文字，或添加一张照片', 'Write something, or add a photo'),
+        tone: EchoBriefHintTone.gentle,
       );
       return false;
     }
@@ -634,15 +630,10 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
         debugPrint('WriteDiaryPage._save failed: $e\n$st');
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '保存失败，请稍后再试',
-              style: TextStyle(fontWeight: FontWeight.w300),
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: EchoColors.nightSurface,
-          ),
+        showEchoBriefHint(
+          context,
+          message: tr('保存失败，请稍后再试', 'Save failed — try again later'),
+          tone: EchoBriefHintTone.gentle,
         );
       }
       return false;
@@ -659,10 +650,13 @@ class _WriteDiaryPageState extends State<WriteDiaryPage>
     final action = await showEchoActionSheet<String>(
       context: context,
       message: DiaryCopy.leaveConfirmMessage,
-      actions: const [
-        EchoActionSheetItem(label: '保存并离开', value: 'save'),
+      actions: [
         EchoActionSheetItem(
-          label: '离开',
+          label: tr('保存并离开', 'Save & leave'),
+          value: 'save',
+        ),
+        EchoActionSheetItem(
+          label: tr('离开', 'Leave'),
           value: 'leave',
           isDestructive: true,
         ),
@@ -1037,7 +1031,7 @@ class _ExtrasSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '添加照片（${imagePaths.length}/$maxImages）',
+                  tr('添加照片（${imagePaths.length}/$maxImages）', 'Add photo (${imagePaths.length}/$maxImages)'),
                   style: chrome.textStyle(color: chrome.textSecondary),
                 ),
               ],
@@ -1053,7 +1047,7 @@ class _ExtrasSection extends StatelessWidget {
           onTap: onPickRecordedDate,
           scale: 0.98,
           child: _RecordedRow(
-            label: '日期',
+            label: tr('日期', 'Date'),
             value: recordedAtLabel,
             chrome: chrome,
           ),
@@ -1063,14 +1057,14 @@ class _ExtrasSection extends StatelessWidget {
           onTap: onPickRecordedTime,
           scale: 0.98,
           child: _RecordedRow(
-            label: '时间',
+            label: tr('时间', 'Time'),
             value: recordedTimeLabel,
             chrome: chrome,
           ),
         ),
         const SizedBox(height: 20),
         Text(
-          '位置',
+          tr('位置', 'Location'),
           style: chrome.textStyle(color: chrome.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 10),
@@ -1079,8 +1073,10 @@ class _ExtrasSection extends StatelessWidget {
             onTap: onClearLocation,
             scale: 0.98,
             child: _RecordedRow(
-              label: '地点',
-              value: placeApproximate ? '${placeLabel!}（约）' : placeLabel!,
+              label: tr('地点', 'Place'),
+              value: placeApproximate
+                  ? (tr('${placeLabel!}（约）', '${placeLabel!} (approx.)'))
+                  : placeLabel!,
               chrome: chrome,
             ),
           )
@@ -1097,7 +1093,9 @@ class _ExtrasSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  locationLoading ? '获取位置中…' : '添加当前位置',
+                  locationLoading
+                      ? tr('获取位置中…', 'Getting location…')
+                      : tr('添加当前位置', 'Add current location'),
                   style: chrome.textStyle(color: chrome.textSecondary),
                 ),
               ],
@@ -1105,7 +1103,7 @@ class _ExtrasSection extends StatelessWidget {
           ),
         const SizedBox(height: 20),
         Text(
-          '天象心情',
+          tr('天象心情', 'Weather mood'),
           style: chrome.textStyle(color: chrome.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 10),
@@ -1143,7 +1141,7 @@ class _ExtrasSection extends StatelessWidget {
             color: chrome.divider,
           ),
           Text(
-            'Echo 轻读',
+            tr('Echo 轻读', 'Echo read'),
             style: chrome.textStyle(color: chrome.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 8),
@@ -1232,7 +1230,7 @@ class _ScrollHint extends StatelessWidget {
         height: 36,
         child: Center(
           child: Text(
-            '向上滑动可添加照片、日期与位置',
+            tr('向上滑动可添加照片、日期与位置', 'Scroll up for photos, date & location'),
             style: chrome.textStyle(
               color: chrome.textSecondary.withValues(alpha: 0.9),
               fontSize: 11,
@@ -1290,7 +1288,7 @@ class _KeyboardToolbar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  saving ? '保存中' : '完成',
+                  saving ? EchoStrings.current.loading : EchoStrings.current.done,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -1344,7 +1342,7 @@ class _BottomBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
           child: Text(
-            saving ? '保存中' : '完成',
+            saving ? EchoStrings.current.loading : EchoStrings.current.done,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w400,

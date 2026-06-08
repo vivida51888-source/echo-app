@@ -14,6 +14,9 @@ import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
+import '../services/locale_service.dart';
 import '../utils/diary_format.dart';
 import 'echo_charm.dart';
 import 'echo_empty_state.dart';
@@ -33,28 +36,28 @@ class _HubModule {
   final Color tint;
 }
 
-const _modules = [
-  _HubModule(
-    label: '留影',
-    icon: Icons.photo_library_outlined,
-    tint: Color(0xFF7A8FA8),
-  ),
-  _HubModule(
-    label: '篇章',
-    icon: Icons.menu_book_outlined,
-    tint: Color(0xFF8B7355),
-  ),
-  _HubModule(
-    label: '雨露树',
-    icon: Icons.eco_outlined,
-    tint: Color(0xFF6A9A62),
-  ),
-  _HubModule(
-    label: '统计',
-    icon: Icons.route_outlined,
-    tint: Color(0xFF8A7AA8),
-  ),
-];
+List<_HubModule> _hubModules(EchoStrings s) => [
+      _HubModule(
+        label: s.hubPhoto,
+        icon: Icons.photo_library_outlined,
+        tint: const Color(0xFF7A8FA8),
+      ),
+      _HubModule(
+        label: s.hubChapters,
+        icon: Icons.menu_book_outlined,
+        tint: const Color(0xFF8B7355),
+      ),
+      _HubModule(
+        label: s.hubTree,
+        icon: Icons.eco_outlined,
+        tint: const Color(0xFF6A9A62),
+      ),
+      _HubModule(
+        label: s.hubStats,
+        icon: Icons.route_outlined,
+        tint: const Color(0xFF8A7AA8),
+      ),
+    ];
 
 /// 回响 hub：四入口横向滑屏，默认首屏为留影。
 class EchoHubCarousel extends StatefulWidget {
@@ -91,7 +94,7 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageIndex = widget.initialPage.clamp(0, _modules.length - 1);
+    _pageIndex = widget.initialPage.clamp(0, 3);
     _pageController = PageController(initialPage: _pageIndex);
     _diaryService.addListener(_onDataChanged);
     _treeService.addListener(_onDataChanged);
@@ -169,33 +172,46 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
 
   String get _recordsSubtitle {
     final count = _diaryService.diaries.length;
-    if (count == 0) return '还没有留下文字，去此刻写下第一篇';
-    return '共 $count 篇 · 按月与按周浏览';
+    if (count == 0) {
+      return tr(
+        '还没有留下文字，去此刻写下第一篇',
+        'No entries yet — write your first on Moment',
+      );
+    }
+    return tr(
+      '共 $count 篇 · 按月与按周浏览',
+      '$count entries · browse by month or week',
+    );
   }
 
   String get _treeSubtitle {
     final growth = _treeService.growth;
     if (_treeService.hasPendingBubbles) {
-      return '${growth.stageLabel} · ${_treeService.pendingBubbles.length} 个雨露待收';
+      return tr('${growth.stageLabel} · ${_treeService.pendingBubbles.length} 个雨露待收', '${growth.stageLabel} · ${_treeService.pendingBubbles.length} dew to collect');
     }
     if (_treeService.storedWater > 0) {
-      return '${growth.stageLabel} · 已存 ${_treeService.storedWater}g 雨露';
+      return tr('${growth.stageLabel} · 已存 ${_treeService.storedWater}g 雨露', '${growth.stageLabel} · ${_treeService.storedWater}g dew stored');
     }
-    return '${growth.stageLabel} · 写下文字得雨露';
+    return tr(
+      '${growth.stageLabel} · 写下文字得雨露',
+      '${growth.stageLabel} · write to earn dew',
+    );
   }
 
   String get _statsSubtitle {
     final weekStart = EchoStatsService.instance.currentWeek(DateTime.now()).start;
     final stats = EchoStatsService.instance.weekStatistics(weekStart);
     if (!stats.hasMoodActivity) {
-      return '看心情流转，也看阴晴圆缺';
+      return tr('看心情流转，也看阴晴圆缺', 'Watch moods shift — sun and rain alike');
     }
     final mood = stats.dominantMood?.label;
     if (mood != null && stats.totalMoodDays > 0) {
-      return '本周心情多是$mood · ${stats.totalMoodDays} 天';
+      return tr('本周心情多是$mood · ${stats.totalMoodDays} 天', 'Mostly $mood this week · ${stats.totalMoodDays} days');
     }
-    if (mood != null) return '本周心情多是$mood';
-    return '看心情流转，也看阴晴圆缺';
+    if (mood != null) {
+      return tr('本周心情多是$mood', 'Mostly $mood this week');
+    }
+    return tr('看心情流转，也看阴晴圆缺', 'Watch moods shift — sun and rain alike');
   }
 
   int get _photoCount {
@@ -208,17 +224,20 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
 
   String get _photoWallSubtitle {
     if (_photoCount == 0) {
-      return '写回响时添照片，会慢慢贴满一面墙';
+      return tr(
+        '写回响时添照片，会慢慢贴满一面墙',
+        'Add photos to echoes — the wall fills over time',
+      );
     }
     final stats = _photoWallPreviewStats();
     final periodName = _wallSettings.viewMode == PhotoWallViewMode.month
         ? DiaryFormat.monthTitle(stats.start.year, stats.start.month)
         : DiaryFormat.weekSectionTitle(stats.start, stats.end);
     if (stats.photoCount > 0) {
-      return '共 $_photoCount 张 · $periodName ${stats.photoCount} 张';
+      return tr('共 $_photoCount 张 · $periodName ${stats.photoCount} 张', '$_photoCount photos · $periodName ${stats.photoCount}');
     }
     final styleLabel = _wallSettings.frameStyleLabel;
-    return '共 $_photoCount 张 · $periodName · $styleLabel';
+    return tr('共 $_photoCount 张 · $periodName · $styleLabel', '$_photoCount photos · $periodName · $styleLabel');
   }
 
   EchoPeriodStatistics _photoWallPreviewStats() {
@@ -235,11 +254,15 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final modules = _hubModules(EchoStrings.of());
+        return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _EchoHubTabStrip(
-          modules: _modules,
+          modules: modules,
           selectedIndex: _pageIndex,
           onSelect: _selectPage,
         ),
@@ -247,10 +270,10 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
-            itemCount: _modules.length,
+            itemCount: modules.length,
             itemBuilder: (context, index) {
               return _EchoHubModulePage(
-                module: _modules[index],
+                module: modules[index],
                 subtitle: _subtitleFor(index),
                 onOpen: _openFor(index),
                 flatPreview: index == 3,
@@ -260,6 +283,8 @@ class _EchoHubCarouselState extends State<EchoHubCarousel> {
           ),
         ),
       ],
+    );
+      },
     );
   }
 
@@ -451,7 +476,7 @@ class _EchoHubModulePage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '进入',
+                        tr('进入', 'Open'),
                         style: EchoTypography.labelMedium.copyWith(
                           color: module.tint,
                         ),
@@ -548,7 +573,10 @@ class _RecordsPreview extends StatelessWidget {
             child: EchoEmptyState(
               charm: EchoCharmKind.diary,
               compact: true,
-              message: '还没有篇章\n去此刻写下第一篇',
+              message: tr(
+                '还没有篇章\n去此刻写下第一篇',
+                'No chapters yet\nWrite your first on Moment',
+              ),
             ),
           );
         }
@@ -706,14 +734,17 @@ class _StatsPreview extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '心情地图',
+              tr('心情地图', 'Mood map'),
               style: EchoTypography.titleMedium.copyWith(
                 color: EchoColors.dayTextPrimary,
               ),
             ),
             const SizedBox(height: EchoSpacing.xxs),
             Text(
-              '左右滑切换入口 · 点「进入」查看完整统计',
+              tr(
+                '左右滑切换入口 · 点「进入」查看完整统计',
+                'Swipe to switch · tap Open for full stats',
+              ),
               style: EchoTypography.caption.copyWith(
                 color: EchoColors.dayTextWhisper,
               ),

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../navigation/app_page_route.dart';
+import '../services/locale_service.dart';
 import '../services/app_lock_service.dart';
 import '../services/privacy_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_settings_layout.dart';
 import '../widgets/scale_tap.dart';
 
@@ -70,12 +74,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
 
   void _rebuild() => setState(() {});
 
-  IconData get _biometricIcon {
-    if (_biometricTypes.contains(BiometricType.face)) {
-      return Icons.face_rounded;
-    }
-    return Icons.fingerprint_rounded;
-  }
+  IconData get _biometricIcon => Icons.fingerprint_rounded;
 
   String get _biometricLabel => _lock.biometricLabel(_biometricTypes);
 
@@ -89,7 +88,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     if (result.success) {
       _oldPinController.clear();
       setState(() => _pinChangeVerified = true);
-      _toast('验证通过，请设置新密码');
+      _toast(tr('验证通过，请设置新密码', 'Verified — set a new PIN'));
     } else if (result.message != null && result.message!.isNotEmpty) {
       _toast(result.message!);
     }
@@ -99,7 +98,7 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     if (_busy) return;
     final oldPin = _oldPinController.text;
     if (oldPin.length < 4) {
-      _toast('请输入当前密码');
+      _toast(tr('请输入当前密码', 'Enter your current PIN'));
       return;
     }
 
@@ -111,26 +110,26 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     if (ok) {
       _oldPinController.clear();
       setState(() => _pinChangeVerified = true);
-      _toast('验证通过，请设置新密码');
+      _toast(tr('验证通过，请设置新密码', 'Verified — set a new PIN'));
     } else {
-      _toast('当前密码不正确');
+      _toast(tr('当前密码不正确', 'Current PIN is incorrect'));
     }
   }
 
   Future<void> _setPin() async {
     if (_pinConfigured && !_pinChangeVerified) {
-      _toast('请先验证指纹或当前密码');
+      _toast(tr('请先验证指纹或当前密码', 'Verify with biometrics or current PIN first'));
       return;
     }
 
     final a = _pinController.text;
     final b = _pinConfirmController.text;
     if (a.length < 4) {
-      _toast('密码至少 4 位');
+      _toast(tr('密码至少 4 位', 'PIN must be at least 4 digits'));
       return;
     }
     if (a != b) {
-      _toast('两次输入不一致');
+      _toast(tr('两次输入不一致', 'PINs do not match'));
       return;
     }
 
@@ -145,7 +144,9 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
         _pinChangeVerified = false;
       });
     }
-    _toast(wasConfigured ? '密码已更新' : '密码已保存');
+    _toast(wasConfigured
+        ? tr('密码已更新', 'PIN updated')
+        : tr('密码已保存', 'PIN saved'));
   }
 
   void _startPinChange() {
@@ -177,33 +178,23 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
     }
 
     if (!_pinConfigured) {
-      _toast('请先设置并保存密码');
+      _toast(tr('请先设置并保存密码', 'Set and save a PIN first'));
       return;
     }
-    if (!_biometricAvailable) {
-      _toast('请先在系统设置中录入指纹或面容');
-      return;
-    }
-
     setState(() => _busy = true);
     final result = await _lock.enableAppLock();
     if (!mounted) return;
     setState(() => _busy = false);
 
     if (result.success) {
-      _toast('应用锁已开启');
+      _toast(tr('应用锁已开启', 'App lock enabled'));
     } else {
-      _toast(result.message ?? '无法开启');
+      _toast(result.message ?? tr('无法开启', 'Could not enable'));
     }
   }
 
   void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w300)),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showEchoToast(context, msg);
   }
 
   @override
@@ -214,17 +205,13 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
         !_pinConfigured || (_pinEditing && _pinChangeVerified);
     final showPinSummary = _pinConfigured && !_pinEditing;
 
-    return EchoSettingsScaffold(
-      title: '应用锁与隐私',
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        return EchoSettingsScaffold(
+      title: s.appLockTitle,
       children: [
-        EchoSettingsIntroBanner(
-          icon: Icons.shield_moon_outlined,
-          tint: _lockTint,
-          title: '温柔的守护',
-          description: '为回响加一道锁。指纹、面容与密码均可解锁，'
-              '打开时优先使用生物识别。',
-        ),
-        const SizedBox(height: EchoSpacing.lg),
         _LockStatusHero(
           tint: _lockTint,
           enabled: enabled,
@@ -263,16 +250,19 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
         EchoSettingsSectionCard(
           tint: _lockTint,
           icon: Icons.lock_outline_rounded,
-          title: '启用应用锁',
-          description: '需先保存密码，并在系统中录入生物识别',
+          title: tr('启用应用锁', 'Enable app lock'),
+          description: tr(
+            '需先保存密码；有指纹时可指纹 + 密码解锁',
+            'Save a PIN first; add fingerprint for faster unlock',
+          ),
           child: EchoSettingsInsetPanel(
             child: EchoSettingsSwitchTile(
               icon: enabled ? Icons.lock_rounded : Icons.lock_open_rounded,
               iconTint: _lockTint,
-              title: enabled ? '已开启' : '未开启',
+              title: enabled ? tr('已开启', 'On') : tr('未开启', 'Off'),
               subtitle: enabled
-                  ? '离开应用后按间隔重新验证'
-                  : '开启后保护日记与设置',
+                  ? tr('离开应用后按间隔重新验证', 'Re-verify after leaving the app')
+                  : tr('开启后保护日记与设置', 'Protects your journal and settings'),
               value: enabled,
               onChanged: _busy ? null : _toggleEnabled,
             ),
@@ -283,8 +273,8 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
           EchoSettingsSectionCard(
             tint: _lockTint,
             icon: Icons.schedule_rounded,
-            title: '解锁间隔',
-            description: '多久之后需要重新验证身份',
+            title: tr('解锁间隔', 'Unlock interval'),
+            description: tr('多久之后需要重新验证身份', 'When to ask for verification again'),
             child: Wrap(
               spacing: EchoSpacing.sm,
               runSpacing: EchoSpacing.sm,
@@ -303,19 +293,21 @@ class _AppLockSettingsPageState extends State<AppLockSettingsPage> {
         EchoSettingsSectionCard(
           tint: _privacyTint,
           icon: Icons.blur_on_outlined,
-          title: '界面隐私',
+          title: tr('界面隐私', 'Screen privacy'),
           child: EchoSettingsInsetPanel(
             child: EchoSettingsSwitchTile(
               icon: Icons.visibility_off_outlined,
               iconTint: _privacyTint,
-              title: '多任务界面模糊',
-              subtitle: '切换应用时以模糊画面保护内容',
+              title: tr('多任务界面模糊', 'Blur in app switcher'),
+              subtitle: tr('切换应用时以模糊画面保护内容', 'Blur content when switching apps'),
               value: _privacy.blurInSwitcher,
               onChanged: _privacy.setBlurInSwitcher,
             ),
           ),
         ),
       ],
+    );
+      },
     );
   }
 }
@@ -334,8 +326,8 @@ class _PinSummaryCard extends StatelessWidget {
     return EchoSettingsSectionCard(
       tint: tint,
       icon: Icons.pin_outlined,
-      title: '应用密码',
-      description: '已设置，修改前需验证身份',
+      title: tr('应用密码', 'App PIN'),
+      description: tr('已设置，修改前需验证身份', 'Set — verify identity before changing'),
       child: ScaleTap(
         onTap: onChange,
         scale: 0.98,
@@ -346,14 +338,14 @@ class _PinSummaryCard extends StatelessWidget {
               const SizedBox(width: EchoSpacing.sm),
               Expanded(
                 child: Text(
-                  '密码已设置',
+                  tr('密码已设置', 'PIN is set'),
                   style: EchoTypography.bodyMedium.copyWith(
                     color: EchoColors.dayTextPrimary,
                   ),
                 ),
               ),
               Text(
-                '修改',
+                tr('修改', 'Change'),
                 style: EchoTypography.labelMedium.copyWith(
                   color: tint,
                 ),
@@ -395,8 +387,11 @@ class _PinVerifyCard extends StatelessWidget {
     return EchoSettingsSectionCard(
       tint: tint,
       icon: Icons.verified_user_outlined,
-      title: '验证身份',
-      description: '修改密码前，请验证指纹或输入当前密码',
+      title: tr('验证身份', 'Verify identity'),
+      description: tr(
+        '修改密码前，请验证指纹或输入当前密码',
+        'Verify with fingerprint or enter your current PIN',
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -408,7 +403,7 @@ class _PinVerifyCard extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: EchoSpacing.sm),
                 child: Text(
-                  '取消',
+                  tr('取消', 'Cancel'),
                   style: EchoTypography.caption.copyWith(
                     color: EchoColors.dayTextWhisper,
                   ),
@@ -436,7 +431,7 @@ class _PinVerifyCard extends StatelessWidget {
                     Icon(biometricIcon, size: 20, color: tint),
                     const SizedBox(width: 8),
                     Text(
-                      '用$biometricLabel验证',
+                      tr('用$biometricLabel验证', 'Verify with $biometricLabel'),
                       style: EchoTypography.labelLarge.copyWith(
                         color: EchoColors.dayTextPrimary,
                         fontWeight: FontWeight.w400,
@@ -457,7 +452,7 @@ class _PinVerifyCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    '或输入当前密码',
+                    tr('或输入当前密码', 'Or enter current PIN'),
                     style: EchoTypography.micro.copyWith(
                       color: EchoColors.dayTextWhisper,
                     ),
@@ -474,7 +469,7 @@ class _PinVerifyCard extends StatelessWidget {
           ],
           _PinField(
             controller: oldPinController,
-            label: '当前密码',
+            label: tr('当前密码', 'Current PIN'),
             tint: tint,
             enabled: !busy,
             onSubmitted: onVerifyOldPin,
@@ -501,7 +496,7 @@ class _PinVerifyCard extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      '验证并继续',
+                      tr('验证并继续', 'Verify & continue'),
                       style: EchoTypography.labelLarge.copyWith(
                         color: EchoColors.dayBackground,
                         fontWeight: FontWeight.w400,
@@ -600,7 +595,7 @@ class _LockStatusHero extends StatelessWidget {
           ),
           const SizedBox(height: EchoSpacing.md),
           Text(
-            enabled ? '回响已上锁' : '回响未上锁',
+            enabled ? tr('回响已上锁', 'Echoes are locked') : tr('回响未上锁', 'Echoes are unlocked'),
             style: EchoTypography.titleMedium.copyWith(
               color: EchoColors.dayTextPrimary,
               fontWeight: FontWeight.w400,
@@ -609,8 +604,8 @@ class _LockStatusHero extends StatelessWidget {
           const SizedBox(height: EchoSpacing.xxs),
           Text(
             enabled
-                ? (modeLabel ?? '生物识别 + 密码')
-                : '设置密码后可开启保护',
+                ? (modeLabel ?? tr('指纹 + 密码', 'Fingerprint + PIN'))
+                : tr('设置密码后可开启保护', 'Set a PIN to enable protection'),
             style: EchoTypography.caption.copyWith(
               color: EchoColors.dayTextSecondary,
             ),
@@ -623,13 +618,15 @@ class _LockStatusHero extends StatelessWidget {
             children: [
               _StatusPill(
                 icon: Icons.password_rounded,
-                label: pinConfigured ? '密码已设' : '待设密码',
+                label: pinConfigured ? tr('密码已设', 'PIN set') : tr('待设密码', 'PIN needed'),
                 active: pinConfigured,
                 tint: tint,
               ),
               _StatusPill(
                 icon: Icons.fingerprint_rounded,
-                label: biometricAvailable ? '生物识别可用' : '待录入生物识别',
+                label: biometricAvailable
+                    ? tr('指纹可用', 'Fingerprint ready')
+                    : tr('仅密码解锁', 'PIN only'),
                 active: biometricAvailable,
                 tint: tint,
               ),
@@ -713,8 +710,8 @@ class _PinSetupCard extends StatelessWidget {
     return EchoSettingsSectionCard(
       tint: tint,
       icon: Icons.pin_outlined,
-      title: pinConfigured ? '修改密码' : '设置密码',
-      description: '4–6 位数字，作为备用解锁方式',
+      title: pinConfigured ? tr('修改密码', 'Change PIN') : tr('设置密码', 'Set PIN'),
+      description: tr('4–6 位数字，作为备用解锁方式', '4–6 digits as backup unlock'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -727,7 +724,7 @@ class _PinSetupCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: EchoSpacing.sm),
                   child: Text(
-                    '取消',
+                    tr('取消', 'Cancel'),
                     style: EchoTypography.caption.copyWith(
                       color: EchoColors.dayTextWhisper,
                     ),
@@ -740,7 +737,7 @@ class _PinSetupCard extends StatelessWidget {
               Expanded(
                 child: _PinField(
                   controller: pinController,
-                  label: '新密码',
+                  label: tr('新密码', 'New PIN'),
                   tint: tint,
                 ),
               ),
@@ -748,7 +745,7 @@ class _PinSetupCard extends StatelessWidget {
               Expanded(
                 child: _PinField(
                   controller: pinConfirmController,
-                  label: '确认',
+                  label: tr('确认', 'Confirm'),
                   tint: tint,
                 ),
               ),
@@ -776,7 +773,7 @@ class _PinSetupCard extends StatelessWidget {
                   Icon(Icons.check_rounded, size: 18, color: tint),
                   const SizedBox(width: 8),
                   Text(
-                    pinConfigured ? '更新密码' : '保存密码',
+                    pinConfigured ? tr('更新密码', 'Update PIN') : tr('保存密码', 'Save PIN'),
                     style: EchoTypography.labelLarge.copyWith(
                       color: EchoColors.dayTextPrimary,
                       fontWeight: FontWeight.w400,

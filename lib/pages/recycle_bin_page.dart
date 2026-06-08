@@ -3,7 +3,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/trashed_diary.dart';
+import '../services/locale_service.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_service.dart';
 import '../theme/echo_colors.dart';
@@ -12,6 +15,7 @@ import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
 import '../utils/diary_format.dart';
 import '../widgets/echo_action_sheet.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_settings_layout.dart';
 import '../widgets/scale_tap.dart';
 
@@ -46,21 +50,23 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
   Future<void> _restore(TrashedDiary item) async {
     await _service.restoreDiary(item.diary.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('已恢复'),
-        behavior: SnackBarBehavior.floating,
-      ),
+    showEchoBriefHint(
+      context,
+      message: tr('已恢复', 'Restored'),
+      tone: EchoBriefHintTone.success,
     );
   }
 
   Future<void> _deleteForever(TrashedDiary item) async {
     final ok = await showEchoActionSheet<bool>(
       context: context,
-      message: '永久删除这篇回响？\n删除后无法找回。',
-      actions: const [
+      message: tr(
+        '永久删除这篇回响？\n删除后无法找回。',
+        'Delete this echo permanently?\nIt cannot be recovered.',
+      ),
+      actions: [
         EchoActionSheetItem(
-          label: '永久删除',
+          label: tr('永久删除', 'Delete permanently'),
           value: true,
           isDestructive: true,
         ),
@@ -74,10 +80,13 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
   Future<void> _emptyAll() async {
     final ok = await showEchoActionSheet<bool>(
       context: context,
-      message: '清空回收站？\n所有内容将永久删除。',
-      actions: const [
+      message: tr(
+        '清空回收站？\n所有内容将永久删除。',
+        'Empty recycle bin?\nAll items will be deleted permanently.',
+      ),
+      actions: [
         EchoActionSheetItem(
-          label: '清空',
+          label: tr('清空', 'Empty'),
           value: true,
           isDestructive: true,
         ),
@@ -88,16 +97,20 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
 
   @override
   Widget build(BuildContext context) {
-    final items = _service.trashedDiaries;
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        final items = _service.trashedDiaries;
 
-    return EchoSettingsScaffold(
-      title: '回收站',
+        return EchoSettingsScaffold(
+      title: s.recycleBinTitle,
       actions: [
         if (items.isNotEmpty)
           TextButton(
             onPressed: _emptyAll,
             child: Text(
-              '清空',
+              tr('清空', 'Empty'),
               style: EchoTypography.caption.copyWith(
                 color: EchoColors.destructive,
               ),
@@ -107,7 +120,10 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
       children: [
         if (items.isEmpty) ...[
           Text(
-            '删除的内容会在这里保留 $diaryTrashRetentionDays 天',
+            tr(
+              '删除的内容会在这里保留 $diaryTrashRetentionDays 天',
+              'Deleted items stay here for $diaryTrashRetentionDays days',
+            ),
             style: EchoTypography.caption.copyWith(
               color: EchoColors.dayTextSecondary,
               height: 1.5,
@@ -117,7 +133,7 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
           EchoSettingsEmptyCard(
             icon: Icons.delete_outline_rounded,
             tint: _tint,
-            message: '暂无已删除的回响',
+            message: tr('暂无已删除的回响', 'No deleted echoes'),
           ),
         ] else ...[
           _TrashStatsCard(items: items, tint: _tint),
@@ -129,6 +145,8 @@ class _RecycleBinPageState extends State<RecycleBinPage> {
           ),
         ],
       ],
+    );
+      },
     );
   }
 }
@@ -189,13 +207,13 @@ class _TrashStatsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '篇',
+                  tr('篇', 'entries'),
                   style: EchoTypography.labelMedium.copyWith(
                     color: EchoColors.dayTextSecondary,
                   ),
                 ),
                 Text(
-                  '待恢复',
+                  tr('待恢复', 'to restore'),
                   style: EchoTypography.micro.copyWith(
                     color: EchoColors.dayTextWhisper,
                   ),
@@ -213,7 +231,10 @@ class _TrashStatsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '保留 $diaryTrashRetentionDays 天',
+                    tr(
+                      '保留 $diaryTrashRetentionDays 天',
+                      'Kept for $diaryTrashRetentionDays days',
+                    ),
                     style: EchoTypography.bodyMedium.copyWith(
                       color: EchoColors.dayTextPrimary,
                     ),
@@ -221,8 +242,11 @@ class _TrashStatsCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     soonest <= 3
-                        ? '最近一篇还剩 $soonest 天'
-                        : '到期后自动清除',
+                        ? tr(
+                            '最近一篇还剩 $soonest 天',
+                            'Next expires in $soonest days',
+                          )
+                        : tr('到期后自动清除', 'Auto-cleared when expired'),
                     style: EchoTypography.caption.copyWith(
                       color: soonest <= 3
                           ? EchoColors.destructive.withValues(alpha: 0.8)
@@ -362,7 +386,7 @@ class _TrashRow extends StatelessWidget {
                   children: [
                     _TrashActionChip(
                       icon: Icons.restore_rounded,
-                      label: '恢复',
+                      label: tr('恢复', 'Restore'),
                       onTap: onRestore,
                     ),
                     const SizedBox(width: EchoSpacing.xs),
@@ -465,7 +489,7 @@ class _DaysChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(EchoRadii.pill),
       ),
       child: Text(
-        '$days 天',
+        tr('$days 天', '${days}d'),
         style: EchoTypography.micro.copyWith(
           color: urgent
               ? EchoColors.destructive.withValues(alpha: 0.9)

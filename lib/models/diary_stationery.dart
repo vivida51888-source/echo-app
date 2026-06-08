@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 日记写作信纸预设。
 class DiaryStationery {
   const DiaryStationery({
@@ -154,4 +156,32 @@ abstract final class DiaryStationeries {
     }
     return plain;
   }
+}
+
+extension DiaryStationeryL10n on DiaryStationery {
+  String get localizedName => switch (id) {
+        'plain' => tr('素纸', 'Plain'),
+        'morning_light' => tr('晨光纸笺', 'Morning light'),
+        'sakura_notes' => tr('樱花札记', 'Sakura notes'),
+        'moon_bay' => tr('月湾灯影', 'Moon bay'),
+        'clear_sky' => tr('晴空物语', 'Clear sky'),
+        'snow_dream' => tr('雪梦絮语', 'Snow dream'),
+        'autumn_street' => tr('秋日长街', 'Autumn street'),
+        'sea_breeze' => tr('海风纸页', 'Sea breeze'),
+        'rainy_window' => tr('雨窗记事', 'Rainy window'),
+        _ => name,
+      };
+
+  String get localizedSubtitle => switch (id) {
+        'plain' => tr('留白纸色 · 专注文字', 'Blank paper · focus on words'),
+        'morning_light' => tr('暖光树影 · 碎花角饰', 'Warm light · floral corners'),
+        'sakura_notes' => tr('淡粉樱枝 · 和纸边框', 'Pale sakura · washi border'),
+        'moon_bay' => tr('星夜露台 · 湾上灯火', 'Starry terrace · bay lights'),
+        'clear_sky' => tr('碧波绿叶 · 冰饮花影', 'Green leaves · summer drink'),
+        'snow_dream' => tr('雪夜灯枝 · 远村微光', 'Snow night · distant glow'),
+        'autumn_street' => tr('暖枫便笺 · 木栅秋色', 'Maple notes · autumn fence'),
+        'sea_breeze' => tr('椰影邮戳 · 远帆轻浪', 'Palm stamp · distant sail'),
+        'rainy_window' => tr('细雨橱窗 · 街灯回响', 'Rain on glass · street lamps'),
+        _ => subtitle,
+      };
 }

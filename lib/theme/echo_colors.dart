@@ -125,8 +125,24 @@ abstract final class EchoColors {
   static Color get todoCompletedBorder =>
       _isDark ? const Color(0xFF3D5245) : const Color(0xFFC5DCC9);
 
+  /// 待办「重要」标记（赤陶色，与生活分类的暖棕区分）。
   static Color get todoImportant =>
-      _isDark ? const Color(0xFFD4A574) : const Color(0xFFB8844A);
+      _isDark ? const Color(0xFFE88868) : const Color(0xFFCA6548);
+
+  /// 页头快捷入口图标强调色。
+  static Color get headerCheckIn =>
+      _isDark ? const Color(0xFFE0B04A) : const Color(0xFFC99A3A);
+  static Color get headerShop =>
+      _isDark ? const Color(0xFFE08A90) : const Color(0xFFC07878);
+  static Color get headerBookshelf =>
+      _isDark ? const Color(0xFF8EB0D4) : const Color(0xFF5A7FA8);
+  static Color get headerInsights =>
+      _isDark ? const Color(0xFF88A8D8) : const Color(0xFF4A6A94);
+  static Color get headerMail =>
+      _isDark ? const Color(0xFFA898D8) : const Color(0xFF6B5F9A);
+  static Color get headerEvent => todoImportant;
+  static Color get headerCreate =>
+      _isDark ? const Color(0xFF78C090) : const Color(0xFF5A9A6A);
 
   /// 主行动按钮：暖色浅底，替代纯黑实心块。
   static Color get primaryButtonFill => _isDark

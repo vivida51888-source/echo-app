@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/important_day.dart';
 import '../utils/important_day_copy.dart';
+import 'echo_reward_service.dart';
 import 'important_day_notification_service.dart';
 
 /// 印记 · 重要日：本地存储与排序。
@@ -132,12 +133,16 @@ class ImportantDayService extends ChangeNotifier {
     );
     await _box?.put(normalized.id, normalized.toJson());
     final index = _items.indexWhere((d) => d.id == normalized.id);
+    final isNew = index < 0;
     if (index >= 0) {
       _items[index] = normalized;
     } else {
       _items.add(normalized);
     }
     notifyListeners();
+    if (isNew) {
+      await EchoRewardService.instance.syncAchievements(recordFeedback: true);
+    }
     await ImportantDayNotificationService.instance.syncOne(normalized);
     return normalized;
   }

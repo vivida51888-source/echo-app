@@ -78,10 +78,12 @@ class PhotoWallSettingsService extends ChangeNotifier {
 
   String get materialDisplayLabel {
     if (frameStyle == PhotoWallFrameStyle.filmStrip) {
-      return _filmMaterial().label;
+      return _filmMaterial().localizedLabel;
     }
-    if (material.isCustom && customWallPath != null) return '自定义';
-    return material.label;
+    if (material.isCustom && customWallPath != null) {
+      return PhotoWallMaterial.custom.localizedLabel;
+    }
+    return material.localizedLabel;
   }
 
   String get posterCaption => _box?.get(_posterCaptionKey) as String? ?? '';
@@ -130,7 +132,7 @@ class PhotoWallSettingsService extends ChangeNotifier {
         _box?.get(_frameStyleKey) as String?,
       );
 
-  String get frameStyleLabel => frameStyle.label;
+  String get frameStyleLabel => frameStyle.localizedLabel;
 
   Future<void> setShowPhotoDates(bool value) async {
     await _box?.put(_showDatesKey, value);

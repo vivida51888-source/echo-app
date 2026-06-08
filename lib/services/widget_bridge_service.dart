@@ -1,7 +1,7 @@
 import '../data/daily_quotes.dart';
+import '../l10n/echo_strings.dart';
 import '../services/diary_service.dart';
 import '../utils/diary_format.dart';
-import '../utils/echo_copy.dart';
 import '../utils/home_moment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
@@ -28,9 +28,10 @@ class WidgetBridgeService {
     try {
       final now = DateTime.now();
       final moment = HomeMoment.snapshot();
-      final phrase = moment.action == HomeMomentAction.showQuote
+      final strings = EchoStrings.of();
+      final phrase = moment.action == HomeMomentAction.showQuote && !strings.isEn
           ? DailyQuotes.forDate(now).text
-          : EchoCopy.dailyPhrase(now);
+          : strings.dailyPhrase(now);
       final pending = DiaryService.instance.diaries.length;
 
       await HomeWidget.saveWidgetData<String>('phrase', phrase);

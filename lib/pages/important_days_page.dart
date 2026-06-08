@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/important_day.dart';
 import '../navigation/app_page_route.dart';
 import '../services/important_day_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
 import '../utils/important_day_copy.dart';
 import '../widgets/echo_action_sheet.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_charm.dart';
 import '../widgets/echo_empty_state.dart';
 import '../widgets/scale_tap.dart';
@@ -51,9 +55,16 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
   Future<void> _confirmDelete(ImportantDay day) async {
     final ok = await showEchoActionSheet<bool>(
       context: context,
-      message: '删除「${day.title}」？\nEcho 将不再提醒这一天。',
+      message: tr(
+        '删除「${day.title}」？\nEcho 将不再提醒这一天。',
+        'Delete «${day.title}»?\nEcho will stop reminding you.',
+      ),
       actions: [
-        const EchoActionSheetItem(label: '删除', value: true, isDestructive: true),
+        EchoActionSheetItem(
+          label: EchoStrings.current.delete,
+          value: true,
+          isDestructive: true,
+        ),
       ],
     );
     if (ok == true) {
@@ -67,7 +78,10 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
     final annuals = _service.annualItems;
     final isEmpty = anchors.isEmpty && annuals.isEmpty;
 
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        return Scaffold(
       backgroundColor: EchoColors.appBackground,
       body: SafeArea(
         child: Column(
@@ -125,7 +139,7 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      '轻轻提醒',
+                      tr('轻轻提醒', 'Gentle reminders'),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
@@ -157,7 +171,7 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
                                 subtitle:
                                     ImportantDayCopy.anchorSectionSubtitle,
                                 highlight: ImportantDayCopy.anchorMetricLabel,
-                                highlightTint: const Color(0xFF5F9B72),
+                                highlightTint: ImportantDayCopy.anchorHighlightTint,
                                 charm: EchoCharmKind.milestone,
                               ),
                               for (final day in anchors)
@@ -182,7 +196,7 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
                                 subtitle:
                                     ImportantDayCopy.annualSectionSubtitle,
                                 highlight: ImportantDayCopy.annualHighlight,
-                                highlightTint: const Color(0xFF6B7F9C),
+                                highlightTint: ImportantDayCopy.annualHighlightTint,
                                 charm: EchoCharmKind.wallCalendar,
                               ),
                               for (final day in annuals)
@@ -217,7 +231,7 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
             ),
           ),
           child: Text(
-            '添加重要日',
+            tr('添加重要日', 'Add important day'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -226,6 +240,8 @@ class _ImportantDaysPageState extends State<ImportantDaysPage> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }
@@ -240,9 +256,12 @@ class _EmptyHint extends StatelessWidget {
     return Center(
       child: EchoEmptyState(
         charm: EchoCharmKind.imprint,
-        title: '还没有印记',
-        message: '把对你重要的日子放进来\nEcho 会在那天，和「此刻」轻轻相遇',
-        actionLabel: '添加第一个重要日',
+        title: tr('还没有印记', 'No marks yet'),
+        message: tr(
+          '把对你重要的日子放进来\nEcho 会在那天，和「此刻」轻轻相遇',
+          'Add days that matter to you.\nEcho will meet them gently on the day.',
+        ),
+        actionLabel: tr('添加第一个重要日', 'Add your first mark'),
         onAction: onAdd,
       ),
     );
@@ -403,8 +422,8 @@ class _ImportantDayTile extends StatelessWidget {
         ? EchoColors.todoCompletedBorder.withValues(alpha: 0.55)
         : EchoColors.dayDivider.withValues(alpha: 0.95);
     final metricAccent = isAnchor
-        ? const Color(0xFF6FAF82)
-        : const Color(0xFF7A8FA8);
+        ? ImportantDayCopy.anchorAccent
+        : ImportantDayCopy.annualAccent;
 
     return ScaleTap(
       onTap: onTap,
@@ -447,6 +466,8 @@ class _ImportantDayTile extends StatelessWidget {
                 children: [
                   Text(
                     day.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: EchoTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w400,
                     ),
@@ -454,6 +475,8 @@ class _ImportantDayTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     ImportantDayCopy.listDetailLine(day),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: EchoTypography.caption.copyWith(
                       color: EchoColors.dayTextWhisper,
                       fontWeight: FontWeight.w300,
@@ -525,6 +548,8 @@ class _MetricBlock extends StatelessWidget {
     return Text(
       value,
       textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w400,
@@ -558,7 +583,7 @@ class _MetricBlock extends StatelessWidget {
           ),
           const SizedBox(width: 2),
           Text(
-            '天',
+            tr('天', 'd'),
             style: TextStyle(
               fontSize: unitSize,
               fontWeight: FontWeight.w500,
@@ -577,7 +602,7 @@ class _MetricBlock extends StatelessWidget {
       children: [
         _DurationLine(
           value: '$years',
-          unit: '年',
+          unit: tr('年', 'y'),
           valueSize: 24,
           unitSize: 13,
         ),
@@ -587,7 +612,7 @@ class _MetricBlock extends StatelessWidget {
         ] else ...[
           const SizedBox(height: 2),
           Text(
-            '整周年',
+            tr('整周年', 'Full year'),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w400,
@@ -667,8 +692,8 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
   bool get _isAnchor => _mode == ImportantDayMode.anchor;
 
   Color get _modeTint => _isAnchor
-      ? const Color(0xFF6FAF82)
-      : const Color(0xFF7A8FA8);
+      ? ImportantDayCopy.anchorAccent
+      : ImportantDayCopy.annualAccent;
 
   @override
   void initState() {
@@ -702,11 +727,18 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
       initialDate: initial,
       firstDate: DateTime(1900),
       lastDate: _isAnchor ? now : DateTime(2100),
-      helpText: _isAnchor ? '选择开始日期' : '选择每年日期',
+      helpText: _isAnchor
+          ? tr('选择开始日期', 'Choose start date')
+          : tr('选择每年日期', 'Choose annual date'),
       builder: (context, child) {
+        final brightness =
+            EchoColors.isDark ? Brightness.dark : Brightness.light;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            brightness: brightness,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: EchoColors.dayTextPrimary,
+              brightness: brightness,
               primary: EchoColors.dayTextPrimary,
               onPrimary: EchoColors.daySurface,
               surface: EchoColors.daySurface,
@@ -752,11 +784,10 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
   Future<void> _save() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('请写一个名字', style: TextStyle(fontWeight: FontWeight.w300)),
-          behavior: SnackBarBehavior.floating,
-        ),
+      showEchoBriefHint(
+        context,
+        message: tr('请写一个名字', 'Please enter a name'),
+        tone: EchoBriefHintTone.gentle,
       );
       return;
     }
@@ -814,7 +845,7 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                     child: Padding(
                       padding: EdgeInsets.all(12),
                       child: Text(
-                        '保存',
+                        EchoStrings.current.save,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
@@ -831,7 +862,9 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                 padding: const EdgeInsets.fromLTRB(28, 4, 28, 40),
                 children: [
                   Text(
-                    _isEditing ? '编辑重要日' : '添加重要日',
+                    _isEditing
+                        ? tr('编辑重要日', 'Edit important day')
+                        : tr('添加重要日', 'Add important day'),
                     style: EchoTypography.displayMedium.copyWith(
                       fontSize: 24,
                       fontWeight: FontWeight.w300,
@@ -840,7 +873,10 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '创建后会自动开启提醒，早上 9:00 轻轻唤起',
+                    tr(
+                      '创建后会自动开启提醒，早上 9:00 轻轻唤起',
+                      'Reminders turn on automatically — a gentle nudge at 9:00 AM',
+                    ),
                     style: EchoTypography.caption.copyWith(
                       color: EchoColors.dayTextWhisper,
                       fontWeight: FontWeight.w300,
@@ -853,23 +889,23 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                     onSelect: _setMode,
                   ),
                   const SizedBox(height: EchoSpacing.lg),
-                  const _SectionLabel('名字'),
+                  _SectionLabel(tr('名字', 'Name')),
                   _EchoFilledField(
                     controller: _titleController,
                     hintText: _isAnchor
-                        ? '例如：入职、结婚、相识'
-                        : '例如：妈妈的生日、相识纪念日',
+                        ? tr('例如：入职、结婚、相识', 'e.g. new job, wedding, first met')
+                        : tr('例如：妈妈的生日、相识纪念日', 'e.g. Mom\'s birthday, anniversary'),
                     maxLength: ImportantDayService.maxTitleLength,
                   ),
                   const SizedBox(height: EchoSpacing.lg),
-                  const _SectionLabel('类型'),
+                  _SectionLabel(tr('类型', 'Type')),
                   Wrap(
                     spacing: EchoSpacing.xs,
                     runSpacing: EchoSpacing.xs,
                     children: ImportantDayKind.forMode(_mode).map((kind) {
                       final selected = _kind == kind;
                       return _KindChip(
-                        label: kind.label,
+                        label: kind.localizedLabel,
                         selected: selected,
                         tint: _modeTint,
                         onTap: () => setState(() => _kind = kind),
@@ -877,7 +913,7 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                     }).toList(),
                   ),
                   const SizedBox(height: EchoSpacing.lg),
-                  _SectionLabel(_isAnchor ? '开始日期' : '每年日期'),
+                  _SectionLabel(_isAnchor ? tr('开始日期', 'Start date') : tr('每年日期', 'Annual date')),
                   ScaleTap(
                     onTap: _pickDate,
                     scale: 0.98,
@@ -890,7 +926,7 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                   Text(
                     _isAnchor
                         ? ImportantDayCopy.anchorMilestoneHint(_kind)
-                        : '每年 ${draft.month} 月 ${draft.day} 日 · 当天与提前 3 天提醒',
+                        : (tr('每年 ${draft.month} 月 ${draft.day} 日 · 当天与提前 3 天提醒', 'Every ${draft.month}/${draft.day} · on the day & 3 days before')),
                     style: EchoTypography.caption.copyWith(
                       color: EchoColors.dayTextWhisper,
                       fontWeight: FontWeight.w300,
@@ -898,10 +934,10 @@ class _ImportantDayEditPageState extends State<ImportantDayEditPage> {
                     ),
                   ),
                   const SizedBox(height: EchoSpacing.lg),
-                  const _SectionLabel('备注（可选）'),
+                  _SectionLabel(tr('备注（可选）', 'Note (optional)')),
                   _EchoFilledField(
                     controller: _noteController,
-                    hintText: '只给自己看，不会出现在通知里',
+                    hintText: tr('只给自己看，不会出现在通知里', 'Private — not shown in notifications'),
                     maxLength: ImportantDayService.maxNoteLength,
                     maxLines: 3,
                   ),
@@ -954,11 +990,9 @@ class _ModeHubTab extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  static const _annualTint = Color(0xFF7A8FA8);
-  static const _anchorTint = Color(0xFF6FAF82);
-
-  Color get _tint =>
-      mode == ImportantDayMode.anchor ? _anchorTint : _annualTint;
+  Color get _tint => mode == ImportantDayMode.anchor
+      ? ImportantDayCopy.anchorAccent
+      : ImportantDayCopy.annualAccent;
 
   IconData get _icon => mode == ImportantDayMode.anchor
       ? Icons.flag_outlined
@@ -999,7 +1033,10 @@ class _ModeHubTab extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              mode.label,
+              mode.localizedLabel,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: EchoTypography.labelMedium.copyWith(
                 fontWeight: selected ? FontWeight.w500 : FontWeight.w300,
                 color: selected
@@ -1009,10 +1046,16 @@ class _ModeHubTab extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              mode == ImportantDayMode.anchor ? '累计天数' : '倒计时',
+              mode == ImportantDayMode.anchor
+                  ? tr('累计天数', 'Days elapsed')
+                  : tr('倒计时', 'Countdown'),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: EchoTypography.micro.copyWith(
                 color: EchoColors.dayTextWhisper,
                 fontWeight: FontWeight.w300,
+                height: 1.25,
               ),
             ),
           ],
@@ -1034,8 +1077,10 @@ class _DatePickerCard extends StatelessWidget {
   String get _preview {
     if (day.isAnchor) {
       final elapsed = day.daysElapsed();
-      if (elapsed == null) return '起算后将显示天数';
-      return '$elapsed 天';
+      if (elapsed == null) {
+        return tr('起算后将显示天数', 'Days will show after start date');
+      }
+      return tr('$elapsed 天', '$elapsed days');
     }
     return ImportantDayCopy.countdownLabel(day);
   }

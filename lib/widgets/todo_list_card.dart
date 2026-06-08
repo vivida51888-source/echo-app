@@ -272,11 +272,11 @@ class _TodoMetaRow extends StatelessWidget {
     final importantAccent = EchoColors.todoImportant;
     final trailing = <Widget>[];
 
-    if (todo.repeat != TodoRepeat.none) {
-      trailing.add(_MetaText(todo.repeat.label));
-    }
     if (expired && !done && !sleeping) {
       trailing.add(_MetaText(TodoCopy.expiredLabel, emphasis: true));
+    }
+    if (todo.repeat != TodoRepeat.none) {
+      trailing.add(_MetaText(todo.repeat.localizedLabel));
     }
 
     final leading = <Widget>[];
@@ -308,7 +308,7 @@ class _TodoMetaRow extends StatelessWidget {
         Icon(todo.category.icon, size: 12, color: accent),
         const SizedBox(width: 4),
         Text(
-          todo.category.label,
+          todo.category.localizedLabel,
           style: EchoTypography.caption.copyWith(
             color: accent,
             fontWeight: FontWeight.w400,
@@ -318,24 +318,35 @@ class _TodoMetaRow extends StatelessWidget {
     }
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...leading,
-        if (leading.isNotEmpty && trailing.isNotEmpty)
-          Text(
-            ' · ',
-            style: EchoTypography.caption.copyWith(
-              color: EchoColors.dayDivider,
-            ),
+        Expanded(
+          child: Wrap(
+            spacing: 0,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: leading,
           ),
-        for (var i = 0; i < trailing.length; i++) ...[
-          if (i > 0)
-            Text(
-              ' · ',
-              style: EchoTypography.caption.copyWith(
-                color: EchoColors.dayDivider,
-              ),
-            ),
-          trailing[i],
+        ),
+        if (trailing.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Wrap(
+            spacing: 0,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (var i = 0; i < trailing.length; i++) ...[
+                if (i > 0)
+                  Text(
+                    ' · ',
+                    style: EchoTypography.caption.copyWith(
+                      color: EchoColors.dayDivider,
+                    ),
+                  ),
+                trailing[i],
+              ],
+            ],
+          ),
         ],
       ],
     );
@@ -343,17 +354,22 @@ class _TodoMetaRow extends StatelessWidget {
 }
 
 class _MetaText extends StatelessWidget {
-  const _MetaText(this.text, {this.emphasis = false});
+  const _MetaText(this.text, {this.emphasis = false, this.muted = false});
 
   final String text;
   final bool emphasis;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
       style: EchoTypography.caption.copyWith(
-        color: emphasis ? EchoColors.dayTextSecondary : EchoColors.dayTextWhisper,
+        color: emphasis
+            ? EchoColors.dayTextSecondary
+            : muted
+                ? EchoColors.dayTextWhisper.withValues(alpha: 0.75)
+                : EchoColors.dayTextWhisper,
         fontWeight: FontWeight.w300,
       ),
     );

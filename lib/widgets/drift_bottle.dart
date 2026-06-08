@@ -3,14 +3,16 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../navigation/app_page_route.dart';
 import '../pages/diary_detail_page.dart';
 import '../services/diary_service.dart';
-import '../services/echo_collectible_service.dart';
+import '../services/echo_reward_service.dart';
 import '../services/echo_tree_service.dart';
 import '../theme/echo_colors.dart';
 import '../utils/diary_format.dart';
+import 'echo_hint.dart';
 import 'scale_tap.dart';
 
 /// 提示词下方 · 横卧漂流瓶从左漂向右。
@@ -238,7 +240,7 @@ class _DriftBottlePainter extends CustomPainter {
       Paint()..color = Colors.white.withValues(alpha: 0.06),
     );
 
-    const text = '回响';
+    final text = tr('回响', 'Echo');
     final fontSize = h * 0.36;
     final letterSpacing = 2.4;
 
@@ -353,21 +355,14 @@ class _DriftBottleSheetState extends State<_DriftBottleSheet>
 
   Future<void> _replyToLetter(Diary diary) async {
     await EchoTreeService.instance.grantWaterForDriftReply(diary.id);
-    final shell =
-        await EchoCollectibleService.instance.grantResonanceShell(diary.id);
+    await EchoRewardService.instance.onDriftReply();
     if (!mounted) return;
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          shell != null
-              ? '善意已回响 · 获得共鸣贝壳'
-              : '善意已回响 · +10g 雨露',
-          style: TextStyle(fontWeight: FontWeight.w300),
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: EchoColors.dayTextPrimary,
-      ),
+    if (!mounted) return;
+    showEchoBriefHint(
+      context,
+      message: tr('善意已回响 · +10g 雨露', 'Kindness echoed · +10g dew'),
+      tone: EchoBriefHintTone.success,
     );
   }
 
@@ -389,7 +384,7 @@ class _DriftBottleSheetState extends State<_DriftBottleSheet>
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
           child: _loading
-              ? const _SheetStatus(message: '信笺上浮中…')
+              ? _SheetStatus(message: tr('信笺上浮中…', 'Letter surfacing…'))
               : _diary == null
                   ? _EmptyLetter(onClose: () => Navigator.pop(context))
                   : FadeTransition(
@@ -455,10 +450,10 @@ class _EmptyLetter extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SheetHeader(title: '漂流瓶'),
+        _SheetHeader(title: tr('漂流瓶', 'Drift bottle')),
         const SizedBox(height: 20),
         Text(
-          '还没有信漂回来',
+          tr('还没有信漂回来', 'No letters have drifted in yet'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w300,
@@ -468,7 +463,10 @@ class _EmptyLetter extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '在篇章里把回响放进漂流瓶，就会从这里漂来',
+          tr(
+            '在篇章里把回响放进漂流瓶，就会从这里漂来',
+            'Put an echo in a bottle from Chapters — it may drift here',
+          ),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w300,
@@ -477,7 +475,7 @@ class _EmptyLetter extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _SheetButton(label: '好的', onTap: onClose, primary: false),
+        _SheetButton(label: tr('好的', 'OK'), onTap: onClose, primary: false),
       ],
     );
   }
@@ -509,7 +507,7 @@ class _LetterContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SheetHeader(title: '漂来的信'),
+        _SheetHeader(title: tr('漂来的信', 'Drifted letter')),
         const SizedBox(height: 16),
         Text(
           DiaryFormat.dateLine(diary.createdAt),
@@ -568,7 +566,7 @@ class _LetterContent extends StatelessWidget {
           children: [
             Expanded(
               child: _SheetButton(
-                label: '换一封',
+                label: tr('换一封', 'Another'),
                 onTap: onRedraw,
                 primary: false,
               ),
@@ -576,7 +574,7 @@ class _LetterContent extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _SheetButton(
-                label: '给予回响',
+                label: tr('给予回响', 'Echo back'),
                 onTap: onReply,
                 primary: true,
               ),
@@ -590,7 +588,7 @@ class _LetterContent extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              '读全文',
+              tr('读全文', 'Read all'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -608,7 +606,7 @@ class _LetterContent extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              '放回',
+              tr('放回', 'Put back'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

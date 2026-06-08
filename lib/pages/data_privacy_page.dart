@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../navigation/app_page_route.dart';
+import '../services/locale_service.dart';
+import '../utils/legal_links.dart';
 import '../utils/settings_info_copy.dart';
 import '../widgets/echo_info_page.dart';
+import '../widgets/scale_tap.dart';
+import '../theme/echo_typography.dart';
 
 class DataPrivacyPage extends StatelessWidget {
   const DataPrivacyPage({super.key});
@@ -11,13 +17,16 @@ class DataPrivacyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EchoInfoPage(
-      title: '数据与隐私',
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        return EchoInfoPage(
+      title: EchoStrings.of().dataPrivacyTitle,
       subtitle: SettingsInfoCopy.privacySubtitle,
       introIcon: Icons.shield_outlined,
       introTint: _tint,
-      introTitle: '本地存储',
-      sections: const [
+      introTitle: tr('本地存储', 'Local storage'),
+      sections: [
         EchoInfoSection(
           title: SettingsInfoCopy.privacyPrincipleTitle,
           paragraphs: [SettingsInfoCopy.privacyPrinciple],
@@ -35,6 +44,14 @@ class DataPrivacyPage extends StatelessWidget {
           bullets: SettingsInfoCopy.privacyPermissions,
         ),
         EchoInfoSection(
+          title: SettingsInfoCopy.privacyPurchasesTitle,
+          paragraphs: [SettingsInfoCopy.privacyPurchases],
+        ),
+        EchoInfoSection(
+          title: SettingsInfoCopy.privacyBackupTitle,
+          paragraphs: [SettingsInfoCopy.privacyBackup],
+        ),
+        EchoInfoSection(
           title: SettingsInfoCopy.privacyAiTitle,
           paragraphs: [SettingsInfoCopy.privacyAi],
         ),
@@ -47,6 +64,27 @@ class DataPrivacyPage extends StatelessWidget {
           paragraphs: [SettingsInfoCopy.privacyUpdate],
         ),
       ],
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ScaleTap(
+            onTap: () => openPrivacyPolicyUrl(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                tr('在浏览器中查看完整隐私政策', 'View full privacy policy online'),
+                textAlign: TextAlign.center,
+                style: EchoTypography.labelMedium.copyWith(
+                  color: _tint,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+      },
     );
   }
 }

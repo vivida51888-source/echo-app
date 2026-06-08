@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/localized.dart';
 import '../models/echo_water_bubble.dart';
 import '../theme/echo_colors.dart';
 import '../utils/echo_bubble_layout.dart';
@@ -261,8 +262,8 @@ class _BubbleOrb extends StatelessWidget {
     final gramsFont = EchoBubbleMetrics.gramsFontSize(grams);
     final borderW = isStreak ? 2.0 : 1.5;
     final caption = streakDays > 1
-        ? '连 $streakDays 天'
-        : (isBackfill ? '补记' : kindLabel);
+        ? (tr('连 $streakDays 天', '$streakDays-day streak'))
+        : (isBackfill ? tr('补记', 'Backfill') : kindLabel);
 
     return Container(
       width: diameter,

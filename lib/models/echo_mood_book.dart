@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../services/echo_stats_service.dart';
 import '../utils/diary_format.dart';
 import 'weather_mood.dart';
@@ -41,7 +42,8 @@ class EchoMoodBook {
   Color get spineShadow => Color.lerp(spineColor, Colors.black, 0.18)!;
 
   String get dominantLabel =>
-      dominantMood?.label ?? (hasEntries ? '多云' : '空白');
+      dominantMood?.label ??
+      (hasEntries ? WeatherMood.defaultMood.label : tr('空白', 'Blank'));
 
   String get dominantEmoji => dominantMood?.emoji ?? (hasEntries ? '⛅' : '—');
 }

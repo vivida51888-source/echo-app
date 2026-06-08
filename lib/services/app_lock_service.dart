@@ -9,6 +9,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_darwin/local_auth_darwin.dart';
 
+import '../l10n/localized.dart';
+
 enum AppLockType { none, biometrics, pin, both }
 
 enum AppLockInterval {
@@ -19,9 +21,11 @@ enum AppLockInterval {
 
 extension AppLockIntervalLabel on AppLockInterval {
   String get label => switch (this) {
-        AppLockInterval.always => '每次打开',
-        AppLockInterval.minutes15 => '离开 15 分钟后',
-        AppLockInterval.minutes60 => '离开 1 小时后',
+        AppLockInterval.always => tr('每次打开', 'Every time'),
+        AppLockInterval.minutes15 =>
+          tr('离开 15 分钟后', 'After 15 minutes away'),
+        AppLockInterval.minutes60 =>
+          tr('离开 1 小时后', 'After 1 hour away'),
       };
 }
 
@@ -35,27 +39,27 @@ class AppLockAuthResult {
 /// 系统验证卡片不展示自定义文案（仅保留取消等必要按钮）。
 const _hiddenLine = '\u200b';
 
-const List<AuthMessages> kAppLockAuthMessages = [
-  AndroidAuthMessages(
-    signInTitle: _hiddenLine,
-    biometricHint: _hiddenLine,
-    cancelButton: '取消',
-    biometricNotRecognized: '请重试',
-    biometricSuccess: _hiddenLine,
-    biometricRequiredTitle: _hiddenLine,
-    deviceCredentialsRequiredTitle: _hiddenLine,
-    deviceCredentialsSetupDescription: _hiddenLine,
-    goToSettingsButton: '取消',
-    goToSettingsDescription: _hiddenLine,
-  ),
-  IOSAuthMessages(
-    cancelButton: '取消',
-    goToSettingsButton: '取消',
-    goToSettingsDescription: _hiddenLine,
-    lockOut: '请稍后再试',
-    localizedFallbackTitle: '取消',
-  ),
-];
+List<AuthMessages> appLockAuthMessages() => [
+      AndroidAuthMessages(
+        signInTitle: _hiddenLine,
+        biometricHint: _hiddenLine,
+        cancelButton: tr('取消', 'Cancel'),
+        biometricNotRecognized: tr('请重试', 'Try again'),
+        biometricSuccess: _hiddenLine,
+        biometricRequiredTitle: _hiddenLine,
+        deviceCredentialsRequiredTitle: _hiddenLine,
+        deviceCredentialsSetupDescription: _hiddenLine,
+        goToSettingsButton: tr('取消', 'Cancel'),
+        goToSettingsDescription: _hiddenLine,
+      ),
+      IOSAuthMessages(
+        cancelButton: tr('取消', 'Cancel'),
+        goToSettingsButton: tr('取消', 'Cancel'),
+        goToSettingsDescription: _hiddenLine,
+        lockOut: tr('请稍后再试', 'Try again later'),
+        localizedFallbackTitle: tr('取消', 'Cancel'),
+      ),
+    ];
 
 /// 应用锁：生物识别或 PIN。
 class AppLockService extends ChangeNotifier {
@@ -92,7 +96,10 @@ class AppLockService extends ChangeNotifier {
   bool get usesBiometricUnlock => _enabled;
   bool get usesPinUnlock => _enabled;
 
-  String get lockModeLabel => '生物识别 + 密码';
+  String get lockModeLabel => switch (_type) {
+        AppLockType.pin => tr('密码', 'PIN only'),
+        _ => tr('指纹 + 密码', 'Fingerprint + PIN'),
+      };
 
   Future<void> init() async {
     _box = await Hive.openBox<dynamic>(_boxName);
@@ -115,11 +122,16 @@ class AppLockService extends ChangeNotifier {
     notifyListeners();
   }
 
+  static bool _isFingerprintType(BiometricType type) =>
+      type == BiometricType.fingerprint ||
+      type == BiometricType.strong ||
+      type == BiometricType.weak;
+
   Future<bool> canUseBiometrics() async {
     try {
       if (!await _auth.isDeviceSupported()) return false;
       final available = await _auth.getAvailableBiometrics();
-      return available.isNotEmpty;
+      return available.any(_isFingerprintType);
     } catch (e, st) {
       if (kDebugMode) debugPrint('AppLockService.canUseBiometrics: $e\n$st');
       return false;
@@ -128,19 +140,14 @@ class AppLockService extends ChangeNotifier {
 
   Future<List<BiometricType>> availableBiometricTypes() async {
     try {
-      return await _auth.getAvailableBiometrics();
+      final available = await _auth.getAvailableBiometrics();
+      return available.where(_isFingerprintType).toList(growable: false);
     } catch (_) {
       return const [];
     }
   }
 
-  String biometricLabel(List<BiometricType> types) {
-    if (types.contains(BiometricType.face)) return '面容';
-    if (types.contains(BiometricType.fingerprint)) return '指纹';
-    if (types.contains(BiometricType.strong)) return '指纹';
-    if (types.contains(BiometricType.weak)) return '指纹';
-    return '生物识别';
-  }
+  String biometricLabel(List<BiometricType> types) => tr('指纹', 'Fingerprint');
 
   Future<void> setEnabled(bool value) async {
     _enabled = value;
@@ -173,22 +180,19 @@ class AppLockService extends ChangeNotifier {
 
   Future<AppLockAuthResult> enableAppLock() async {
     if (!await hasPinConfigured()) {
-      return const AppLockAuthResult(
+      return AppLockAuthResult(
         success: false,
-        message: '请先设置并保存密码',
+        message: tr('请先设置并保存密码', 'Set and save a PIN first'),
       );
     }
-    if (!await canUseBiometrics()) {
-      return const AppLockAuthResult(
-        success: false,
-        message: '请先录入指纹或面容',
-      );
+    if (await canUseBiometrics()) {
+      final trial = await _authenticateBiometrics();
+      if (!trial.success) return trial;
+      await setLockType(AppLockType.both);
+    } else {
+      await setLockType(AppLockType.pin);
     }
 
-    final trial = await _authenticateBiometrics();
-    if (!trial.success) return trial;
-
-    await setLockType(AppLockType.both);
     await setEnabled(true);
     markUnlocked();
     return const AppLockAuthResult(success: true);
@@ -265,7 +269,10 @@ class AppLockService extends ChangeNotifier {
     }
 
     if (_type != AppLockType.both) {
-      return const AppLockAuthResult(success: false, message: '请用密码解锁');
+      return AppLockAuthResult(
+        success: false,
+        message: tr('请用密码解锁', 'Unlock with your PIN'),
+      );
     }
 
     return _authenticateBiometrics(unlockOnSuccess: true);
@@ -281,20 +288,23 @@ class AppLockService extends ChangeNotifier {
     _biometricInFlight = true;
     try {
       if (!await _auth.isDeviceSupported()) {
-        return const AppLockAuthResult(success: false, message: '不支持');
+        return AppLockAuthResult(
+          success: false,
+          message: tr('不支持', 'Not supported'),
+        );
       }
 
       final available = await _auth.getAvailableBiometrics();
-      if (available.isEmpty) {
-        return const AppLockAuthResult(
+      if (!available.any(_isFingerprintType)) {
+        return AppLockAuthResult(
           success: false,
-          message: '请先录入指纹或面容',
+          message: tr('请先在系统中录入指纹', 'Enroll a fingerprint in system settings first'),
         );
       }
 
       final ok = await _auth.authenticate(
-        localizedReason: '验证以解锁 Echo',
-        authMessages: kAppLockAuthMessages,
+        localizedReason: tr('验证以解锁 Echo', 'Verify to unlock Echo'),
+        authMessages: appLockAuthMessages(),
         options: const AuthenticationOptions(
           stickyAuth: false,
           biometricOnly: true,
@@ -307,9 +317,9 @@ class AppLockService extends ChangeNotifier {
         if (unlockOnSuccess) markUnlocked();
         return const AppLockAuthResult(success: true);
       }
-      return const AppLockAuthResult(
+      return AppLockAuthResult(
         success: false,
-        message: '验证未通过',
+        message: tr('验证未通过', 'Verification failed'),
       );
     } on PlatformException catch (e) {
       if (kDebugMode) debugPrint('AppLockService.unlockWithBiometrics: $e');
@@ -319,7 +329,10 @@ class AppLockService extends ChangeNotifier {
       );
     } catch (e, st) {
       if (kDebugMode) debugPrint('AppLockService.unlockWithBiometrics: $e\n$st');
-      return const AppLockAuthResult(success: false, message: '验证失败');
+      return AppLockAuthResult(
+        success: false,
+        message: tr('验证失败', 'Verification failed'),
+      );
     } finally {
       _biometricInFlight = false;
     }
@@ -327,13 +340,16 @@ class AppLockService extends ChangeNotifier {
 
   String _messageForPlatformException(PlatformException e) {
     return switch (e.code) {
-      'NotAvailable' => '不可用',
-      'NotEnrolled' => '请先录入指纹或面容',
-      'LockedOut' => '请稍后再试',
-      'PermanentlyLockedOut' => '请用系统密码',
-      'PasscodeNotSet' => '请先设锁屏密码',
-      'OtherOperatingSystem' => '不支持',
-      _ => '验证失败',
+      'NotAvailable' => tr('不可用', 'Unavailable'),
+      'NotEnrolled' =>
+        tr('请先在系统中录入指纹', 'Enroll a fingerprint in system settings first'),
+      'LockedOut' => tr('请稍后再试', 'Try again later'),
+      'PermanentlyLockedOut' =>
+        tr('请用系统密码', 'Use your device passcode'),
+      'PasscodeNotSet' =>
+        tr('请先设锁屏密码', 'Set a device passcode first'),
+      'OtherOperatingSystem' => tr('不支持', 'Not supported'),
+      _ => tr('验证失败', 'Verification failed'),
     };
   }
 

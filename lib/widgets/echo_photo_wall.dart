@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gal/gal.dart';
 
+import '../l10n/localized.dart';
 import '../models/photo_wall_frame_style.dart';
 import '../models/photo_wall_material.dart';
 import '../models/weather_mood.dart';
@@ -183,8 +184,11 @@ class _EchoPhotoWallState extends State<EchoPhotoWall> {
             compact: widget.compact,
             message: widget.emptyMessage ??
                 (widget.compact
-                    ? '还没有照片'
-                    : '这一段还没有照片\n写作时添上一张，这里会慢慢拼成一面墙'),
+                    ? tr('还没有照片', 'No photos yet')
+                    : tr(
+                        '这一段还没有照片\n写作时添上一张，这里会慢慢拼成一面墙',
+                        'No photos in this period yet.\nAdd one while writing — the wall will grow.',
+                      )),
           ),
         ),
       );
@@ -493,8 +497,10 @@ class EchoPhotoWallCompare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final prevLabel = isWeekly ? '上周' : '上月';
-    final currLabel = isWeekly ? '本周' : '本月';
+    final prevLabel =
+        isWeekly ? tr('上周', 'Last week') : tr('上月', 'Last month');
+    final currLabel =
+        isWeekly ? tr('本周', 'This week') : tr('本月', 'This month');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,7 +559,7 @@ class _CompareColumn extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          '$count 张',
+          tr('$count 张', '$count photos'),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w300,
@@ -844,7 +850,7 @@ class _FilmFrameBack extends StatelessWidget {
                   onTap: onEject!,
                   scale: 0.98,
                   child: Text(
-                    '吐出胶片',
+                    tr('吐出胶片', 'Eject film'),
                     style: TextStyle(
                       fontSize: (width * 0.11).clamp(7.5, 10.0),
                       fontWeight: FontWeight.w400,
@@ -995,7 +1001,7 @@ class _PolaroidBack extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 child: Text(
-                  '吐出拍立得',
+                  tr('吐出拍立得', 'Eject Polaroid'),
                   style: TextStyle(
                     fontSize: (width * 0.11).clamp(7.5, 9.5),
                     fontWeight: FontWeight.w400,
@@ -1043,8 +1049,8 @@ class _PhotoLightbox extends StatelessWidget {
     final ejectLabel =
         PhotoWallSettingsService.instance.frameStyle ==
                 PhotoWallFrameStyle.filmStrip
-            ? '吐出胶片'
-            : '吐出拍立得';
+            ? tr('吐出胶片', 'Eject film')
+            : tr('吐出拍立得', 'Eject Polaroid');
 
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: 0.94),

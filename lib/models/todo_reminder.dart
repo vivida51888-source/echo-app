@@ -1,3 +1,4 @@
+import '../l10n/localized.dart';
 import 'todo_category.dart';
 import 'todo_subtask.dart';
 
@@ -16,21 +17,58 @@ enum TodoRepeat {
   static TodoRepeat fromName(String name) =>
       TodoRepeat.values.firstWhere((e) => e.name == name, orElse: () => TodoRepeat.none);
 
+  String get localizedLabel => switch (this) {
+        TodoRepeat.none => tr('不重复', 'Never'),
+        TodoRepeat.daily => tr('每天', 'Daily'),
+        TodoRepeat.alternateDay => tr('隔天', 'Every other day'),
+        TodoRepeat.weekly => tr('每周', 'Weekly'),
+        TodoRepeat.monthly => tr('每月', 'Monthly'),
+        TodoRepeat.workday => tr('工作日', 'Workdays'),
+      };
+
+  /// 编辑页展示顺序：重复规则在前，「不重复」置末。
+  static List<TodoRepeat> get editDisplayOrder => [
+        daily,
+        alternateDay,
+        weekly,
+        monthly,
+        workday,
+        none,
+      ];
+
   /// 编辑页选中该规则时的简短说明。
   String? get hint {
     switch (this) {
       case TodoRepeat.none:
-        return '只提醒一次；安放后不再出现';
+        return tr(
+          '只提醒一次；安放后不再出现',
+          'Remind once; gone after you mark done',
+        );
       case TodoRepeat.daily:
-        return '每天在此时提醒；今日安放后推到明天同一时刻';
+        return tr(
+          '每天在此时提醒；今日安放后推到明天同一时刻',
+          'Daily at this time; done today moves to tomorrow',
+        );
       case TodoRepeat.alternateDay:
-        return '隔一天提醒一次；今日安放后推到后天同一时刻';
+        return tr(
+          '隔一天提醒一次；今日安放后推到后天同一时刻',
+          'Every other day; done today moves to the day after tomorrow',
+        );
       case TodoRepeat.weekly:
-        return '每周同一天、同一时刻（如每周三 9:00），不跳过周末与假日';
+        return tr(
+          '每周同一天、同一时刻（如每周三 9:00），不跳过周末与假日',
+          'Same weekday and time each week (e.g. Wed 9:00)',
+        );
       case TodoRepeat.monthly:
-        return '每月同一日、同一时刻（如每月 15 号 9:00）';
+        return tr(
+          '每月同一日、同一时刻（如每月 15 号 9:00）',
+          'Same date and time each month (e.g. 15th at 9:00)',
+        );
       case TodoRepeat.workday:
-        return '按国务院法定节假日 · 周末与假日不提醒，调休上班日照常';
+        return tr(
+          '按国务院法定节假日 · 周末与假日不提醒，调休上班日照常',
+          'China workdays only — skips weekends and public holidays',
+        );
     }
   }
 }

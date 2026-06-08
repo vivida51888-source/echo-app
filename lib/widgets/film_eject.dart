@@ -9,6 +9,8 @@ import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/localized.dart';
+import 'echo_hint.dart';
 import '../models/photo_wall_material.dart';
 import '../services/echo_stats_service.dart';
 import '../models/film_frame_mood.dart';
@@ -97,11 +99,10 @@ class _FilmEjectDialogState extends State<_FilmEjectDialog>
       }
       if (!await Gal.hasAccess()) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('需要相册权限才能保存'),
-              behavior: SnackBarBehavior.floating,
-            ),
+          showEchoBriefHint(
+            context,
+            message: tr('需要相册权限才能保存', 'Photos permission required to save'),
+            tone: EchoBriefHintTone.gentle,
           );
         }
         return;
@@ -109,20 +110,18 @@ class _FilmEjectDialogState extends State<_FilmEjectDialog>
       final bytes = await _captureBytes();
       if (!mounted) return;
       if (bytes == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('保存失败'),
-            behavior: SnackBarBehavior.floating,
-          ),
+        showEchoBriefHint(
+          context,
+          message: tr('保存失败', 'Save failed'),
+          tone: EchoBriefHintTone.gentle,
         );
         return;
       }
       await Gal.putImageBytes(bytes);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('胶片已保存到相册'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      showEchoBriefHint(
+        context,
+        message: tr('胶片已保存到相册', 'Film strip saved to Photos'),
+        tone: EchoBriefHintTone.success,
       );
     } finally {
       if (mounted) setState(() => _saving = false);

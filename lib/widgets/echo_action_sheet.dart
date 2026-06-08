@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import 'scale_tap.dart';
@@ -55,7 +56,7 @@ Future<T?> showEchoActionSheet<T>({
           ),
           Divider(height: 1, color: EchoColors.sheetDivider),
           _EchoActionSheetTile(
-            label: '取消',
+            label: tr('取消', 'Cancel'),
             labelColor: EchoColors.dayTextSecondary,
             onTap: () => Navigator.pop(context),
           ),

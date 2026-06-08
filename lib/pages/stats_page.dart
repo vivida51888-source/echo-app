@@ -1,8 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../services/echo_stats_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
@@ -142,7 +145,7 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
       if (actions.isEmpty) return;
       diaryId = await showEchoActionSheet<String>(
         context: context,
-        message: '${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} 篇回响',
+        message: tr('${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} 篇回响', '${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} echoes'),
         actions: actions,
       );
     }
@@ -176,17 +179,24 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
   Widget build(BuildContext context) {
     final stats = _stats;
 
-    final body = [
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        final body = [
       if (widget.showHeader) ...[
         Text(
-          '统计',
+          s.hubStats,
           style: EchoTypography.displayMedium.copyWith(
             color: EchoColors.dayTextPrimary,
           ),
         ),
         const SizedBox(height: EchoSpacing.xxs + 2),
         Text(
-          '看心情如何流转，也看阴晴圆缺',
+          tr(
+            '看心情如何流转，也看阴晴圆缺',
+            'Watch mood drift — sun, cloud, rain, and moon',
+          ),
           style: EchoTypography.labelMedium.copyWith(
             color: EchoColors.dayTextWhisper,
           ),
@@ -194,7 +204,7 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
         const SizedBox(height: EchoSpacing.xl),
       ] else if (!widget.inline) ...[
         Text(
-          '统计',
+          s.hubStats,
           style: EchoTypography.caption.copyWith(
             color: EchoColors.dayTextWhisper,
             letterSpacing: 0.2,
@@ -209,7 +219,8 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
           _mode = m;
           _slideDirection = 0;
         }),
-        labelBuilder: (m) => m == _StatsMode.week ? '按周' : '按月',
+        labelBuilder: (m) =>
+            m == _StatsMode.week ? tr('按周', 'By week') : tr('按月', 'By month'),
       ),
       const SizedBox(height: 8),
       EchoPeriodNavigatorBar(
@@ -234,10 +245,16 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
       ),
       const SizedBox(height: EchoSpacing.sectionGap),
       EchoSectionCard(
-        title: '心情地图',
+        title: tr('心情地图', 'Mood map'),
         subtitle: stats.isWeekly
-            ? '滑动卷轴看天气变化，左右滑页面其他区域切换周次'
-            : '一月一路，左右滑页面其他区域切换月份',
+            ? tr(
+                '滑动卷轴看天气变化，左右滑页面其他区域切换周次',
+                'Scroll the strip — swipe elsewhere to change weeks',
+              )
+            : tr(
+                '一月一路，左右滑页面其他区域切换月份',
+                'Month at a glance — swipe elsewhere to change months',
+              ),
         child: EchoMoodJourneyMap(
           days: stats.days,
           isWeekly: stats.isWeekly,
@@ -252,8 +269,11 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
         onPrevious: () => _shift(-1),
         onNext: () => _shift(1),
         child: EchoSectionCard(
-          title: '阴晴圆缺',
-          subtitle: '五种天象心情，在这一段里各占多少天',
+          title: tr('阴晴圆缺', 'Sun & moon'),
+          subtitle: tr(
+            '五种天象心情，在这一段里各占多少天',
+            'How many days each weather mood took this period',
+          ),
           child: MoodCyclePanel(stats: stats),
         ),
       ),
@@ -282,6 +302,8 @@ class _EchoStatsPanelState extends State<EchoStatsPanel> {
         EchoSpacing.xxxl,
       ),
       children: body,
+    );
+      },
     );
   }
 }
@@ -330,15 +352,17 @@ class _QuickInsightRow extends StatelessWidget {
       children: [
         Expanded(
           child: _InsightPill(
-            label: '主调心情',
-            value: mood != null ? '${mood.emoji} ${mood.label}' : '尚未标记',
+            label: tr('主调心情', 'Dominant mood'),
+            value: mood != null
+                ? '${mood.emoji} ${mood.label}'
+                : tr('尚未标记', 'Not marked'),
             muted: mood == null,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _InsightPill(
-            label: '标记天数',
+            label: tr('标记天数', 'Mood days'),
             value: daysLabel,
             muted: !stats.hasMoodActivity,
             accent: stats.hasMoodActivity,
@@ -349,8 +373,8 @@ class _QuickInsightRow extends StatelessWidget {
   }
 
   String _moodDaysLabel(EchoPeriodStatistics stats) {
-    if (!stats.hasMoodActivity) return '尚无记录';
-    return '${stats.totalMoodDays} 天';
+    if (!stats.hasMoodActivity) return tr('尚无记录', 'No records yet');
+    return tr('${stats.totalMoodDays} 天', '${stats.totalMoodDays} days');
   }
 }
 

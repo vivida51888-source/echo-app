@@ -1,3 +1,4 @@
+import '../l10n/localized.dart';
 import 'photo_wall_frame_style.dart';
 
 /// 照片墙背景材质。
@@ -16,6 +17,20 @@ enum PhotoWallMaterial {
 
   const PhotoWallMaterial(this.label);
   final String label;
+
+  String get localizedLabel => switch (this) {
+        PhotoWallMaterial.plain => tr('空白墙', 'Blank wall'),
+        PhotoWallMaterial.cork => tr('软木板', 'Cork board'),
+        PhotoWallMaterial.fridge => tr('冰箱贴', 'Fridge magnets'),
+        PhotoWallMaterial.travel => tr('银河匣', 'Galaxy box'),
+        PhotoWallMaterial.natureSpring => tr('樱语季', 'Cherry season'),
+        PhotoWallMaterial.natureSummer => tr('晴光屿', 'Sunny isle'),
+        PhotoWallMaterial.natureAutumn => tr('枫拾间', 'Maple nook'),
+        PhotoWallMaterial.natureWinter => tr('雪梦湾', 'Snow bay'),
+        PhotoWallMaterial.custom => tr('自定义', 'Custom'),
+        PhotoWallMaterial.negative25 => tr('25号底片', 'Frame 25'),
+        PhotoWallMaterial.filmWorkshop => tr('胶片工坊', 'Film workshop'),
+      };
 
   static const basic = [plain, cork, fridge, travel];
 

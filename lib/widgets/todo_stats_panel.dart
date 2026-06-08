@@ -1,11 +1,13 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../services/echo_stats_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_typography.dart';
+import '../utils/todo_copy.dart';
 import 'echo_charm.dart';
 import 'echo_empty_state.dart';
 
@@ -26,10 +28,10 @@ class TodoOverviewBadge {
 
     final span = stats.todoSpanLabel.isNotEmpty
         ? stats.todoSpanLabel
-        : (stats.isWeekly ? '本周' : '本月');
+        : (stats.isWeekly ? tr('本周', 'This week') : tr('本月', 'This month'));
     if (stats.todoScheduled <= 0) {
       return TodoOverviewBadge(
-        label: '安放$span',
+        label: tr('安放$span', 'Done $span'),
         icon: Icons.check_circle_outline_rounded,
         color: EchoColors.todoCompletedFill,
       );
@@ -38,27 +40,27 @@ class TodoOverviewBadge {
     final rate = stats.todoCompletionRate;
     if (rate >= 0.8) {
       return TodoOverviewBadge(
-        label: '高效$span',
+        label: tr('高效$span', 'Productive $span'),
         icon: Icons.bolt_rounded,
         color: const Color(0xFFE8A838),
       );
     }
     if (rate >= 0.6) {
       return TodoOverviewBadge(
-        label: '充实$span',
+        label: tr('充实$span', 'Full $span'),
         icon: Icons.trending_up_rounded,
         color: const Color(0xFF6FAF82),
       );
     }
     if (rate >= 0.4) {
       return TodoOverviewBadge(
-        label: '平和$span',
+        label: tr('平和$span', 'Steady $span'),
         icon: Icons.self_improvement_outlined,
         color: const Color(0xFF6B8CAE),
       );
     }
     return TodoOverviewBadge(
-      label: '缓行$span',
+      label: tr('缓行$span', 'Gentle $span'),
       icon: Icons.directions_walk_rounded,
       color: EchoColors.dayTextSecondary,
     );
@@ -79,16 +81,19 @@ class TodoStatsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!stats.hasTodoActivity) {
-      return const _EmptyStatCard(
+      return _EmptyStatCard(
         charm: EchoCharmKind.sprout,
-        message: '这一段还没有待办记录\n想到什么，轻轻记下就好',
+        message: tr(
+          '这一段还没有待办记录\n想到什么，轻轻记下就好',
+          'No tasks in this period yet.\nNote what matters, gently.',
+        ),
       );
     }
 
     final rate = stats.todoCompletionRate;
     final span = stats.todoSpanLabel.isNotEmpty
         ? stats.todoSpanLabel
-        : (stats.isWeekly ? '本周' : '本月');
+        : (stats.isWeekly ? tr('本周', 'This week') : tr('本月', 'This month'));
     final badge = TodoOverviewBadge.forStats(stats);
 
     return Column(
@@ -136,7 +141,7 @@ class TodoStatsPanel extends StatelessWidget {
                     Text(
                       stats.todoScheduled > 0
                           ? '/ ${stats.todoScheduled}'
-                          : '已安放',
+                          : TodoCopy.completedSection,
                       style: EchoTypography.caption.copyWith(
                         color: EchoColors.dayTextSecondary,
                       ),
@@ -150,8 +155,8 @@ class TodoStatsPanel extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           stats.todoScheduled > 0
-              ? '$span完成 ${(rate * 100).round()}% 的约定'
-              : '$span安放了 ${stats.todoCompleted} 件',
+              ? tr('$span完成 ${(rate * 100).round()}% 的约定', '$span · ${(rate * 100).round()}% of commitments done')
+              : tr('$span安放了 ${stats.todoCompleted} 件', '$span · ${stats.todoCompleted} done'),
           textAlign: TextAlign.center,
           style: EchoTypography.labelLarge.copyWith(
             fontWeight: FontWeight.w300,
@@ -163,7 +168,7 @@ class TodoStatsPanel extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '分类完成度',
+              tr('分类完成度', 'By category'),
               style: EchoTypography.caption.copyWith(
                 fontWeight: FontWeight.w400,
                 color: EchoColors.todoCompletedFill,
@@ -247,8 +252,8 @@ class _TodoOverviewBar extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             scheduled > 0
-                ? '$span · $completed / $scheduled 件约定'
-                : '$span · 已安放 $completed 件',
+                ? tr('$span · $completed / $scheduled 件约定', '$span · $completed / $scheduled commitments')
+                : tr('$span · 已安放 $completed 件', '$span · $completed done'),
             style: EchoTypography.micro.copyWith(
               color: EchoColors.dayTextWhisper,
               fontWeight: FontWeight.w300,
@@ -280,7 +285,7 @@ class TodoCategoryBar extends StatelessWidget {
           SizedBox(
             width: 32,
             child: Text(
-              stat.category.label,
+              stat.category.localizedLabel,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w300,
@@ -354,7 +359,7 @@ class TodoCategoryBar extends StatelessWidget {
       return '${stat.completedCount}/${stat.scheduledCount}';
     }
     if (stat.completedCount > 0) {
-      return '${stat.completedCount} 件';
+      return tr('${stat.completedCount} 件', '${stat.completedCount}');
     }
     return '0';
   }

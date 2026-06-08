@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/echo_appearance_preset.dart';
+import '../services/locale_service.dart';
 import '../navigation/app_page_route.dart';
 import '../services/echo_appearance_service.dart';
 import '../theme/echo_colors.dart';
@@ -17,8 +20,12 @@ class AppearancePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EchoSettingsScaffold(
-      title: '外观',
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        return EchoSettingsScaffold(
+      title: s.appearanceTitle,
       children: [
         ListenableBuilder(
           listenable: EchoAppearanceService.instance,
@@ -41,6 +48,8 @@ class AppearancePage extends StatelessWidget {
           },
         ),
       ],
+    );
+      },
     );
   }
 }
@@ -103,14 +112,14 @@ class _AppearancePresetCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    preset.name,
+                    preset.localizedName,
                     style: EchoTypography.bodyLarge.copyWith(
                       color: EchoColors.dayTextPrimary,
                     ),
                   ),
                   const SizedBox(height: EchoSpacing.xxs),
                   Text(
-                    preset.subtitle,
+                    preset.localizedSubtitle,
                     style: EchoTypography.labelMedium.copyWith(
                       color: EchoColors.dayTextSecondary,
                     ),

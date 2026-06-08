@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../theme/echo_colors.dart';
 import 'scale_tap.dart';
 
@@ -49,12 +50,24 @@ class _PhotoWallExportSheet extends StatefulWidget {
 
 class _PhotoWallExportSheetState extends State<_PhotoWallExportSheet> {
   late final TextEditingController _controller;
-  static const _suggestions = [
-    '这些日子，也悄悄留下了一帧帧画面',
-    '散落的照片，拼成一面会讲故事的墙',
-    '把寻常日子，贴成可以回看的风景',
-    '每一张，都是写给未来的便签',
-  ];
+  static List<String> get _suggestions => [
+        tr(
+          '这些日子，也悄悄留下了一帧帧画面',
+          'These days quietly left frame after frame',
+        ),
+        tr(
+          '散落的照片，拼成一面会讲故事的墙',
+          'Scattered photos became a storytelling wall',
+        ),
+        tr(
+          '把寻常日子，贴成可以回看的风景',
+          'Ordinary days pinned as scenery to revisit',
+        ),
+        tr(
+          '每一张，都是写给未来的便签',
+          'Each one a note to your future self',
+        ),
+      ];
 
   @override
   void initState() {
@@ -94,7 +107,7 @@ class _PhotoWallExportSheetState extends State<_PhotoWallExportSheet> {
           ),
           const SizedBox(height: 20),
           Text(
-            '保存海报',
+            tr('保存海报', 'Save poster'),
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w400,
@@ -112,7 +125,7 @@ class _PhotoWallExportSheetState extends State<_PhotoWallExportSheet> {
           ),
           const SizedBox(height: 20),
           Text(
-            '海报文案',
+            tr('海报文案', 'Poster caption'),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w300,
@@ -132,7 +145,10 @@ class _PhotoWallExportSheetState extends State<_PhotoWallExportSheet> {
               height: 1.55,
             ),
             decoration: InputDecoration(
-              hintText: '写一句想留在海报上的话',
+              hintText: tr(
+                '写一句想留在海报上的话',
+                'A line to keep on the poster',
+              ),
               hintStyle: TextStyle(
                 fontWeight: FontWeight.w300,
                 color: EchoColors.dayTextWhisper,
@@ -213,7 +229,9 @@ class _PhotoWallExportSheetState extends State<_PhotoWallExportSheet> {
               ),
               alignment: Alignment.center,
               child: Text(
-                widget.photoCount == 0 ? '保存空白海报' : '保存到相册',
+                widget.photoCount == 0
+                    ? tr('保存空白海报', 'Save blank poster')
+                    : tr('保存到相册', 'Save to Photos'),
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,

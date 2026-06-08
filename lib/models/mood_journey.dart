@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../models/weather_mood.dart';
 import '../services/echo_stats_service.dart';
 import '../utils/diary_format.dart';
@@ -70,14 +71,14 @@ abstract final class MoodJourneyLayout {
 
   static MoodSceneryKind sceneryFor(EchoDayStat day) {
     if (!day.hasDiary) return MoodSceneryKind.empty;
-    return sceneryForLabel(WeatherMood.resolve(day.moodWeather).label);
+    return sceneryForMood(WeatherMood.resolve(day.moodWeather));
   }
 
-  static MoodSceneryKind sceneryForLabel(String label) => switch (label) {
-        '晴' => MoodSceneryKind.sunny,
-        '小雨' => MoodSceneryKind.lightRain,
-        '大雨' => MoodSceneryKind.heavyRain,
-        '彩虹' => MoodSceneryKind.rainbow,
+  static MoodSceneryKind sceneryForMood(WeatherMood mood) => switch (mood.emoji) {
+        '☀️' => MoodSceneryKind.sunny,
+        '🌧' => MoodSceneryKind.lightRain,
+        '⛈' => MoodSceneryKind.heavyRain,
+        '🌈' => MoodSceneryKind.rainbow,
         _ => MoodSceneryKind.cloudy,
       };
 
@@ -105,7 +106,7 @@ abstract final class MoodJourneyLayout {
       for (final week in weeksInMonth(monthDays))
         MoodJourneySegmentView(
           stat: week.toRepresentativeStat(),
-          cornerLabel: '第 ${week.index + 1} 周',
+          cornerLabel: tr('第 ${week.index + 1} 周', 'Wk ${week.index + 1}'),
           weekRange: DiaryFormat.dateRange(week.days.first.date, week.days.last.date),
         ),
     ];
@@ -143,8 +144,10 @@ class MoodJourneyWeek {
   final int index;
 
   String get label {
-    if (days.isEmpty) return '第 ${index + 1} 周';
-    return '第 ${index + 1} 周 · ${DiaryFormat.dateRange(days.first.date, days.last.date)}';
+    final weekLabel =
+        tr('第 ${index + 1} 周', 'Week ${index + 1}');
+    if (days.isEmpty) return weekLabel;
+    return '$weekLabel · ${DiaryFormat.dateRange(days.first.date, days.last.date)}';
   }
 
   EchoMoodStat? get dominantMood {
@@ -190,12 +193,30 @@ class MoodJourneyWeek {
 
 /// 每种天气的简短沿途描述（底部状态栏用）。
 String moodSceneryCaption(MoodSceneryKind kind) => switch (kind) {
-      MoodSceneryKind.sunny => '晴空铺展，路旁野花在风里轻轻摇',
-      MoodSceneryKind.cloudy => '云层缓缓聚拢，光变得柔和',
-      MoodSceneryKind.lightRain => '细雨斜落，路面映出浅浅水光',
-      MoodSceneryKind.heavyRain => '雨势渐紧，远方轮廓沉入雾中',
-      MoodSceneryKind.rainbow => '雨霁天青，彩虹轻轻架在路尽头',
-      MoodSceneryKind.empty => '尚未写下，这一段还蒙着薄雾',
+      MoodSceneryKind.sunny => tr(
+          '晴空铺展，路旁野花在风里轻轻摇',
+          'Clear sky — wildflowers sway by the road',
+        ),
+      MoodSceneryKind.cloudy => tr(
+          '云层缓缓聚拢，光变得柔和',
+          'Clouds gather — light turns soft',
+        ),
+      MoodSceneryKind.lightRain => tr(
+          '细雨斜落，路面映出浅浅水光',
+          'Light rain — the road gleams',
+        ),
+      MoodSceneryKind.heavyRain => tr(
+          '雨势渐紧，远方轮廓沉入雾中',
+          'Heavier rain — distant shapes fade in mist',
+        ),
+      MoodSceneryKind.rainbow => tr(
+          '雨霁天青，彩虹轻轻架在路尽头',
+          'After rain — a rainbow at the road\'s end',
+        ),
+      MoodSceneryKind.empty => tr(
+          '尚未写下，这一段还蒙着薄雾',
+          'Not written yet — this stretch is still misty',
+        ),
     };
 
 /// 全段共用的地平线 / 路面高度（保证段与段对齐）。

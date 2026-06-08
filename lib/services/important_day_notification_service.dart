@@ -47,7 +47,7 @@ class ImportantDayNotificationService {
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
 
-    const channel = AndroidNotificationChannel(
+    final channel = AndroidNotificationChannel(
       _channelId,
       ImportantDayCopy.notificationChannelName,
       description: ImportantDayCopy.notificationChannelDescription,

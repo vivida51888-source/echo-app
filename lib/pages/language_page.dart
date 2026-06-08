@@ -45,15 +45,15 @@ class _LanguagePageState extends State<LanguagePage> {
           title: s.languagePageTitle,
           description: s.languageSubtitle,
           child: Column(
-            children: EchoAppLocale.values.map((mode) {
-              final englishUi = _service.isEnglish;
+            children: LocaleService.supportedOptions.map((option) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: EchoSpacing.xs),
                 child: EchoSettingsChoiceChip(
-                  label: mode.label(englishUi: englishUi),
-                  selected: _service.mode == mode,
+                  label: _service.optionLabel(option),
+                  subtitle: _service.optionSubtitle(option),
+                  selected: _service.selectedId == option.id,
                   tint: _tint,
-                  onTap: () => _service.setMode(mode),
+                  onTap: () => _service.setSelectedId(option.id),
                 ),
               );
             }).toList(),

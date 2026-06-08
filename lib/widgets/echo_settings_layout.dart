@@ -4,6 +4,7 @@ import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
+import 'echo_count_badge.dart';
 import 'scale_tap.dart';
 
 /// 设置子页统一脚手架。
@@ -207,6 +208,82 @@ class EchoSettingsGroup extends StatelessWidget {
   }
 }
 
+/// 分组内开关项（与 [EchoSettingsListTile] 同款样式，右侧为开关）。
+class EchoSettingsGroupSwitchTile extends StatelessWidget {
+  const EchoSettingsGroupSwitchTile({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.icon,
+    this.iconTint,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final IconData? icon;
+  final Color? iconTint;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = iconTint ?? EchoColors.dayTextSecondary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        EchoSpacing.md,
+        EchoSpacing.md,
+        EchoSpacing.sm,
+        EchoSpacing.md,
+      ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(EchoRadii.sm),
+              ),
+              child: Icon(icon, size: 18, color: tint),
+            ),
+            const SizedBox(width: EchoSpacing.sm + 2),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: EchoTypography.bodyLarge.copyWith(
+                    color: EchoColors.dayTextPrimary,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: EchoSpacing.xxs),
+                  Text(
+                    subtitle!,
+                    style: EchoTypography.labelMedium.copyWith(
+                      color: EchoColors.dayTextSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 分组内列表项。
 class EchoSettingsListTile extends StatelessWidget {
   const EchoSettingsListTile({
@@ -217,6 +294,7 @@ class EchoSettingsListTile extends StatelessWidget {
     this.icon,
     this.iconTint,
     this.enabled = true,
+    this.badgeCount = 0,
   });
 
   final String title;
@@ -225,6 +303,7 @@ class EchoSettingsListTile extends StatelessWidget {
   final Color? iconTint;
   final VoidCallback onTap;
   final bool enabled;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -278,10 +357,13 @@ class EchoSettingsListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: EchoColors.dayTextWhisper,
-                size: 22,
+              EchoCountBadge(
+                count: badgeCount,
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: EchoColors.dayTextWhisper,
+                  size: 22,
+                ),
               ),
             ],
           ),

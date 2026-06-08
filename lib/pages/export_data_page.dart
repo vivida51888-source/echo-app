@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_export_service.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_settings_layout.dart';
 import '../widgets/scale_tap.dart';
 
@@ -46,14 +50,12 @@ class _ExportDataPageState extends State<ExportDataPage> {
       await action();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e is StateError ? e.message : '导出未完成，请稍后再试',
-              style: const TextStyle(fontWeight: FontWeight.w300),
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
+        showEchoBriefHint(
+          context,
+          message: e is StateError
+              ? e.message
+              : tr('导出未完成，请稍后再试', 'Export did not finish — try again later'),
+          tone: EchoBriefHintTone.gentle,
         );
       }
     } finally {
@@ -83,73 +85,95 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
   @override
   Widget build(BuildContext context) {
-    return EchoSettingsScaffold(
-      title: '备份与导出',
-      children: [
-        EchoSettingsSectionCard(
-          tint: _wordTint,
-          icon: Icons.description_outlined,
-          title: '导出 Word',
-          description: '选定日期范围，每篇一个 .docx，打包为 zip。',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _DateRangePanel(
-                start: _start,
-                end: _end,
-                daySpan: _daySpan,
-                diaryCount: _diariesInRange,
-                onPickStart: _pickStart,
-                onPickEnd: _pickEnd,
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        return EchoSettingsScaffold(
+          title: s.exportTitle,
+          children: [
+            EchoSettingsSectionCard(
+              tint: _wordTint,
+              icon: Icons.description_outlined,
+              title: tr('导出 Word', 'Export Word'),
+              description: tr(
+                '选定日期范围，每篇一个 .docx，打包为 zip。',
+                'Pick a date range — one .docx per entry, zipped.',
               ),
-              const SizedBox(height: EchoSpacing.lg),
-              EchoSettingsActionButton(
-                label: _busy ? '导出中…' : '导出 Word 压缩包',
-                tint: _wordTint,
-                icon: Icons.folder_zip_outlined,
-                busy: _busy,
-                onTap: _busy
-                    ? null
-                    : () => _run(
-                          () => DiaryExportService.instance.exportRange(
-                            start: _start,
-                            end: _end,
-                          ),
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _DateRangePanel(
+                    start: _start,
+                    end: _end,
+                    daySpan: _daySpan,
+                    diaryCount: _diariesInRange,
+                    onPickStart: _pickStart,
+                    onPickEnd: _pickEnd,
+                  ),
+                  const SizedBox(height: EchoSpacing.lg),
+                  EchoSettingsActionButton(
+                    label: _busy
+                        ? tr('导出中…', 'Exporting…')
+                        : tr('导出 Word 压缩包', 'Export Word zip'),
+                    tint: _wordTint,
+                    icon: Icons.folder_zip_outlined,
+                    busy: _busy,
+                    onTap: _busy
+                        ? null
+                        : () => _run(
+                              () => DiaryExportService.instance.exportRange(
+                                start: _start,
+                                end: _end,
+                              ),
+                            ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: EchoSpacing.lg),
-        EchoSettingsSectionCard(
-          tint: _archiveTint,
-          icon: Icons.inventory_2_outlined,
-          title: '全量备份',
-          description: '回响、待办与图片一并归档，便于换机或本地留存。',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const EchoSettingsTagRow(
-                tags: ['回响', '待办', '图片'],
+            ),
+            const SizedBox(height: EchoSpacing.lg),
+            EchoSettingsSectionCard(
+              tint: _archiveTint,
+              icon: Icons.inventory_2_outlined,
+              title: tr('全量备份', 'Full backup'),
+              description: tr(
+                '回响、待办与图片一并归档，便于换机或本地留存。',
+                'Echoes, tasks, and photos — for device migration or local archive.',
               ),
-              const SizedBox(height: EchoSpacing.lg),
-              EchoSettingsActionButton(
-                label: _busy ? '打包中…' : '导出全量压缩包',
-                tint: _archiveTint,
-                icon: Icons.cloud_download_outlined,
-                busy: _busy,
-                onTap: _busy
-                    ? null
-                    : () => _run(DiaryExportService.instance.exportFullArchive),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  EchoSettingsTagRow(
+                    tags: trList(
+                      ['回响', '待办', '图片'],
+                      ['Echoes', 'Tasks', 'Photos'],
+                    ),
+                  ),
+                  const SizedBox(height: EchoSpacing.lg),
+                  EchoSettingsActionButton(
+                    label: _busy
+                        ? tr('打包中…', 'Packaging…')
+                        : tr('导出全量压缩包', 'Export full archive'),
+                    tint: _archiveTint,
+                    icon: Icons.cloud_download_outlined,
+                    busy: _busy,
+                    onTap: _busy
+                        ? null
+                        : () => _run(DiaryExportService.instance.exportFullArchive),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: EchoSpacing.xl),
-        const EchoSettingsFootnote(
-          '导出后通过系统分享保存。网盘自动同步将在后续版本提供。',
-        ),
-      ],
+            ),
+            const SizedBox(height: EchoSpacing.xl),
+            EchoSettingsFootnote(
+              tr(
+                '导出后通过系统分享保存。网盘自动同步将在后续版本提供。',
+                'Save via the system share sheet after export. Cloud sync is planned.',
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -181,7 +205,7 @@ class _DateRangePanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: _DateCell(
-                    label: '开始',
+                    label: tr('开始', 'Start'),
                     date: start,
                     onTap: onPickStart,
                   ),
@@ -204,7 +228,7 @@ class _DateRangePanel extends StatelessWidget {
                 ),
                 Expanded(
                   child: _DateCell(
-                    label: '结束',
+                    label: tr('结束', 'End'),
                     date: end,
                     onTap: onPickEnd,
                     alignEnd: true,
@@ -231,14 +255,16 @@ class _DateRangePanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '共 $daySpan 天',
+                  tr('共 $daySpan 天', '$daySpan days'),
                   style: EchoTypography.micro.copyWith(
                     color: EchoColors.dayTextSecondary,
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  diaryCount > 0 ? '$diaryCount 篇回响' : '该时段暂无回响',
+                  diaryCount > 0
+                      ? (tr('$diaryCount 篇回响', '$diaryCount echoes'))
+                      : tr('该时段暂无回响', 'No echoes in this range'),
                   style: EchoTypography.micro.copyWith(
                     color: diaryCount > 0
                         ? EchoColors.dayTextSecondary

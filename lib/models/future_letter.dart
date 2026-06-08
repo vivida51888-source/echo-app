@@ -1,3 +1,5 @@
+import '../l10n/localized.dart';
+
 /// 封存给未来自己的信。
 class FutureLetter {
   const FutureLetter({
@@ -43,9 +45,16 @@ class FutureLetter {
     return deliver.difference(today).inDays;
   }
 
+  /// 提前拆信所需回响币（低于皮肤最低价 680）。
+  int earlyOpenCoinCost([DateTime? now]) {
+    final days = daysUntil(now);
+    if (days <= 0) return 0;
+    return (days * 5 + 80).clamp(96, 520);
+  }
+
   String previewLine() {
     final line = content.split('\n').first.trim();
-    if (line.isEmpty) return '（空信）';
+    if (line.isEmpty) return tr('（空信）', '(Empty letter)');
     if (line.length <= 24) return line;
     return '${line.substring(0, 24)}…';
   }

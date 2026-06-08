@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 农历生肖年与书架主题（按公历年份对应生肖年）。
 enum ChineseZodiac {
   rat('鼠', '🐭', '子鼠'),
@@ -28,6 +30,21 @@ enum ChineseZodiac {
   }
 
   ZodiacShelfTheme get theme => ZodiacShelfTheme.forZodiac(this);
+
+  String get localizedLabel => switch (this) {
+        ChineseZodiac.rat => tr('鼠', 'Rat'),
+        ChineseZodiac.ox => tr('牛', 'Ox'),
+        ChineseZodiac.tiger => tr('虎', 'Tiger'),
+        ChineseZodiac.rabbit => tr('兔', 'Rabbit'),
+        ChineseZodiac.dragon => tr('龙', 'Dragon'),
+        ChineseZodiac.snake => tr('蛇', 'Snake'),
+        ChineseZodiac.horse => tr('马', 'Horse'),
+        ChineseZodiac.goat => tr('羊', 'Goat'),
+        ChineseZodiac.monkey => tr('猴', 'Monkey'),
+        ChineseZodiac.rooster => tr('鸡', 'Rooster'),
+        ChineseZodiac.dog => tr('狗', 'Dog'),
+        ChineseZodiac.pig => tr('猪', 'Pig'),
+      };
 }
 
 class ZodiacShelfTheme {
@@ -54,6 +71,33 @@ class ZodiacShelfTheme {
   final Color accent;
   final String ornament;
   final String tagline;
+
+  String get localizedTagline => switch (zodiac) {
+        ChineseZodiac.rat =>
+          tr('灵鼠守卷，细录心事', 'Rat keeps the scroll, noting every thought'),
+        ChineseZodiac.ox =>
+          tr('勤牛架书，稳步沉淀', 'Ox shelves books, steady and sure'),
+        ChineseZodiac.tiger =>
+          tr('山风入架，虎纹映卷', 'Mountain wind on the shelf, tiger stripes on the scroll'),
+        ChineseZodiac.rabbit =>
+          tr('月兔伴读，温柔留痕', 'Moon rabbit reads beside you, gentle traces left'),
+        ChineseZodiac.dragon =>
+          tr('云龙绕架，气象万千', 'Cloud dragon winds the shelf, skies ever changing'),
+        ChineseZodiac.snake =>
+          tr('灵蛇盘架，静观心澜', 'Snake coils the shelf, watching quiet tides'),
+        ChineseZodiac.horse =>
+          tr('骏马踏架，奔向回响', 'Horse steps the shelf, galloping toward echoes'),
+        ChineseZodiac.goat =>
+          tr('软羊偎书，暖意绵延', 'Soft goat nestles books, warmth that lingers'),
+        ChineseZodiac.monkey =>
+          tr('灵猴翻卷，妙趣横生', 'Monkey turns the scroll, wit in every page'),
+        ChineseZodiac.rooster =>
+          tr('金鸡报晓，日日记下', 'Rooster greets dawn, noting each day'),
+        ChineseZodiac.dog =>
+          tr('忠犬守架，陪伴左右', 'Loyal dog guards the shelf, always nearby'),
+        ChineseZodiac.pig =>
+          tr('福猪满架，丰盈岁月', 'Blessed pig fills the shelf, abundant years'),
+      };
 
   static ZodiacShelfTheme forZodiac(ChineseZodiac zodiac) {
     switch (zodiac) {

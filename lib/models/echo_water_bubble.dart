@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import 'echo_tree_growth.dart';
 import '../utils/echo_bubble_layout.dart';
 
@@ -10,6 +11,8 @@ enum EchoWaterBubbleKind {
   todo,
   futureLetter,
   driftBottle,
+  checkIn,
+  shop,
 }
 
 /// 待收集的一滴雨露（类似能量泡）。
@@ -46,19 +49,25 @@ class EchoWaterBubble {
   String get timeLeftLabel => EchoWaterBubble.formatTimeLeft(timeLeft);
 
   static String formatTimeLeft(Duration left) {
-    if (left <= Duration.zero) return '即将消失';
+    if (left <= Duration.zero) {
+      return tr('即将消失', 'Fading soon');
+    }
 
     if (left.inHours >= 24) {
-      return '${left.inHours ~/ 24} 天后消失';
+      final days = left.inHours ~/ 24;
+      return tr('$days 天后消失', 'Gone in $days d');
     }
     if (left.inHours >= 1) {
-      return '${left.inHours} 小时后消失';
+      final hours = left.inHours;
+      return tr('$hours 小时后消失', 'Gone in $hours h');
     }
 
     final minutes = left.inMinutes;
-    if (minutes >= 1) return '$minutes 分钟后消失';
+    if (minutes >= 1) {
+      return tr('$minutes 分钟后消失', 'Gone in $minutes min');
+    }
 
-    return '即将消失';
+    return tr('即将消失', 'Fading soon');
   }
 
   bool get isBackfillPool =>
@@ -73,19 +82,29 @@ class EchoWaterBubble {
     if (diaryId.startsWith('drift_reply_')) {
       return EchoWaterBubbleKind.driftBottle;
     }
+    if (diaryId.startsWith('checkin_')) {
+      return EchoWaterBubbleKind.checkIn;
+    }
+    if (diaryId.startsWith('shop_bonus_')) {
+      return EchoWaterBubbleKind.shop;
+    }
     return EchoWaterBubbleKind.diary;
   }
 
   String? get kindLabel {
     switch (kind) {
       case EchoWaterBubbleKind.todo:
-        return '待办';
+        return tr('待办', 'Task');
       case EchoWaterBubbleKind.futureLetter:
-        return '未来信';
+        return tr('未来信', 'Letter');
       case EchoWaterBubbleKind.driftBottle:
-        return '漂流';
+        return tr('漂流', 'Drift');
       case EchoWaterBubbleKind.backfill:
-        return '补记';
+        return tr('补记', 'Backfill');
+      case EchoWaterBubbleKind.checkIn:
+        return tr('签到', 'Check-in');
+      case EchoWaterBubbleKind.shop:
+        return tr('小铺', 'Shop');
       case EchoWaterBubbleKind.diary:
         return null;
     }
@@ -144,6 +163,8 @@ class EchoBubblePalette {
       EchoWaterBubbleKind.futureLetter => _futureLetter,
       EchoWaterBubbleKind.driftBottle => _driftBottle,
       EchoWaterBubbleKind.backfill => _backfill,
+      EchoWaterBubbleKind.checkIn => _checkIn,
+      EchoWaterBubbleKind.shop => _shop,
       EchoWaterBubbleKind.diary => _diary,
     };
   }
@@ -183,6 +204,20 @@ class EchoBubblePalette {
     textColor: Color(0xFF2A5566),
     gainColor: Color(0xFF7EADBE),
   );
+
+  /// 签到奖励能量泡：金杏色系，与回响币视觉呼应。
+  static const _checkIn = EchoBubblePalette(
+    gradient: [Color(0xFFFFF0C8), Color(0xFFE8B85A)],
+    textColor: Color(0xFF6B4E14),
+    gainColor: Color(0xFFC99A3A),
+  );
+
+  /// 小铺兑换能量泡：暖玫瑰色，与情绪小铺呼应。
+  static const _shop = EchoBubblePalette(
+    gradient: [Color(0xFFFFE8EC), Color(0xFFD88898)],
+    textColor: Color(0xFF6B3848),
+    gainColor: Color(0xFFC07878),
+  );
 }
 
 /// 成长进度（由累计浇水量决定，可长期累积）。
@@ -217,8 +252,10 @@ class EchoTreeGrowth {
 
   String? get companionLabel {
     if (stage < 9) return null;
-    if (stage == 9) return '古树已养成';
+    if (stage == 9) {
+      return tr('古树已养成', 'Ancient tree complete');
+    }
     final seasons = stage - 8;
-    return '守护 $seasons 季';
+    return tr('守护 $seasons 季', 'Guardian · $seasons seasons');
   }
 }

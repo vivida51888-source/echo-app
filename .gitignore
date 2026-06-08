@@ -46,3 +46,9 @@ app.*.map.json
 
 # Local tooling (portable git, etc.)
 .tools/
+
+# Android release signing (never commit)
+android/key.properties
+android/*.jks
+android/upload-keystore.jks
+android/keystore-password.txt

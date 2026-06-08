@@ -7,6 +7,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../l10n/localized.dart';
 import '../models/todo_reminder.dart';
 import '../theme/echo_colors.dart';
 import '../utils/china_workday_calendar.dart';
@@ -23,8 +24,11 @@ class TodoNotificationService {
   static final TodoNotificationService instance = TodoNotificationService._();
 
   static const _channelId = 'echo_todo';
-  static const _channelName = '回响提醒';
-  static const _channelDescription = 'Echo 温柔的待办提醒，不催促，只轻轻唤起';
+  static String get _channelName => tr('回响提醒', 'Echo reminders');
+  static String get _channelDescription => tr(
+        'Echo 温柔的待办提醒，不催促，只轻轻唤起',
+        'Gentle Echo task reminders — no pressure',
+      );
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -105,7 +109,7 @@ class TodoNotificationService {
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
 
-    const channel = AndroidNotificationChannel(
+    final channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
       description: _channelDescription,
@@ -218,7 +222,7 @@ class TodoNotificationService {
         ),
         ticker: TodoCopy.notificationTitle,
       ),
-      iOS: const DarwinNotificationDetails(
+      iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: false,
         presentSound: false,
@@ -327,7 +331,7 @@ class TodoNotificationService {
     if (!_initialized || !_supportsNativeNotifications) return;
 
     final when = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 8));
-    const body = '这是一条温柔的测试提醒。';
+    final body = tr('这是一条温柔的测试提醒。', 'This is a gentle test reminder.');
 
     await _plugin.zonedSchedule(
       999001,

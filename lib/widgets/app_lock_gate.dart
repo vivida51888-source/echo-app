@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../l10n/localized.dart';
 import '../services/app_lock_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
@@ -109,7 +111,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       setState(() => _error = null);
     } else {
       _pinController.clear();
-      setState(() => _error = '密码错误，请重试');
+      setState(() => _error = tr('密码错误，请重试', 'Wrong PIN — try again'));
     }
   }
 
@@ -131,18 +133,16 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
     });
   }
 
-  IconData get _biometricIcon {
-    if (_biometricTypes.contains(BiometricType.face)) {
-      return Icons.face_rounded;
-    }
-    return Icons.fingerprint_rounded;
-  }
+  IconData get _biometricIcon => Icons.fingerprint_rounded;
 
   @override
   Widget build(BuildContext context) {
-    if (!_lock.isLocked) return widget.child;
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        if (!_lock.isLocked) return widget.child;
 
-    return Stack(
+        return Stack(
       children: [
         IgnorePointer(child: widget.child),
         Positioned.fill(
@@ -203,7 +203,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                                     setState(() {
                                       _error = success
                                           ? null
-                                          : (message ?? '验证未通过');
+                                          : (message ?? tr('验证未通过', 'Verification failed'));
                                     });
                                   },
                                 ),
@@ -218,6 +218,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
           ),
         ),
       ],
+    );
+      },
     );
   }
 }
@@ -344,7 +346,7 @@ class _LockHeader extends StatelessWidget {
         ),
         const SizedBox(height: EchoSpacing.xs),
         Text(
-          '你的回响，只属于你',
+          tr('你的回响，只属于你', 'Your echoes belong to you'),
           style: EchoTypography.labelMedium.copyWith(
             color: EchoColors.dayTextWhisper,
             letterSpacing: 0.3,
@@ -457,7 +459,7 @@ class _LockBiometricCardState extends State<_LockBiometricCard>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '验证身份',
+              tr('验证身份', 'Verify identity'),
               style: EchoTypography.titleMedium.copyWith(
                 color: EchoColors.dayTextPrimary,
                 fontWeight: FontWeight.w400,
@@ -465,7 +467,7 @@ class _LockBiometricCardState extends State<_LockBiometricCard>
             ),
             const SizedBox(height: EchoSpacing.xxs),
             Text(
-              '轻触图标，用${widget.biometricLabel}解锁',
+              tr('轻触图标，用${widget.biometricLabel}解锁', 'Tap the icon to unlock with ${widget.biometricLabel}'),
               style: EchoTypography.caption.copyWith(
                 color: EchoColors.dayTextWhisper,
               ),
@@ -517,7 +519,9 @@ class _LockBiometricCardState extends State<_LockBiometricCard>
             ),
             const SizedBox(height: EchoSpacing.md),
             Text(
-              _prompting ? '正在唤起${widget.biometricLabel}…' : '也可改用密码',
+              _prompting
+                  ? tr('正在唤起${widget.biometricLabel}…', 'Opening ${widget.biometricLabel}…')
+                  : tr('也可改用密码', 'Or use PIN instead'),
               style: EchoTypography.caption.copyWith(
                 color: EchoColors.dayTextSecondary,
               ),
@@ -534,7 +538,7 @@ class _LockBiometricCardState extends State<_LockBiometricCard>
             ],
             const SizedBox(height: EchoSpacing.lg),
             _LockTextAction(
-              label: '使用密码',
+              label: tr('使用密码', 'Use PIN'),
               icon: Icons.password_rounded,
               onTap: widget.onUsePin,
             ),
@@ -586,7 +590,7 @@ class _LockPinCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '输入密码',
+                  tr('输入密码', 'Enter PIN'),
                   style: EchoTypography.titleMedium.copyWith(
                     color: EchoColors.dayTextPrimary,
                     fontWeight: FontWeight.w400,
@@ -594,7 +598,7 @@ class _LockPinCard extends StatelessWidget {
                 ),
                 const SizedBox(height: EchoSpacing.xxs),
                 Text(
-                  '输入应用密码以继续',
+                  tr('输入应用密码以继续', 'Enter your app PIN to continue'),
                   style: EchoTypography.caption.copyWith(
                     color: EchoColors.dayTextWhisper,
                   ),
@@ -680,7 +684,7 @@ class _LockPinCard extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            '解锁',
+                            tr('解锁', 'Unlock'),
                             style: EchoTypography.labelLarge.copyWith(
                               color: EchoColors.dayBackground,
                               fontWeight: FontWeight.w400,
@@ -690,7 +694,7 @@ class _LockPinCard extends StatelessWidget {
                 ),
                 const SizedBox(height: EchoSpacing.lg),
                 _LockTextAction(
-                  label: '用$biometricLabel',
+                  label: tr('用$biometricLabel', 'Use $biometricLabel'),
                   icon: biometricIcon,
                   onTap: busy ? () {} : onBiometric,
                 ),

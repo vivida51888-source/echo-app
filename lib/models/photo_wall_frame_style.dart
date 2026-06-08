@@ -1,3 +1,5 @@
+import '../l10n/localized.dart';
+
 /// 照片墙上单张照片的呈现样式。
 enum PhotoWallFrameStyle {
   polaroid,
@@ -6,6 +8,11 @@ enum PhotoWallFrameStyle {
   String get label => switch (this) {
         PhotoWallFrameStyle.polaroid => '拍立得',
         PhotoWallFrameStyle.filmStrip => '胶片',
+      };
+
+  String get localizedLabel => switch (this) {
+        PhotoWallFrameStyle.polaroid => tr('拍立得', 'Polaroid'),
+        PhotoWallFrameStyle.filmStrip => tr('胶片', 'Film strip'),
       };
 
   static PhotoWallFrameStyle fromName(String? raw) => switch (raw) {

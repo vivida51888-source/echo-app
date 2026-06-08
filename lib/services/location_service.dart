@@ -1,6 +1,8 @@
 import 'dart:async' show TimeoutException;
 
 import 'package:flutter/foundation.dart';
+
+import '../l10n/localized.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -44,12 +46,22 @@ class LocationResolveResult {
   bool get isSuccess => location != null;
 
   String get userMessage => switch (failure) {
-        LocationFailure.serviceDisabled => '请打开手机定位服务',
-        LocationFailure.permissionDenied => '需要位置权限才能记录地点',
-        LocationFailure.permissionDeniedForever =>
-          '位置权限已关闭，请在系统设置中允许 Echo 使用位置',
-        LocationFailure.timeout => '定位超时，请到开阔处后重试',
-        LocationFailure.unavailable => '暂时无法获取位置，请稍后再试',
+        LocationFailure.serviceDisabled =>
+          tr('请打开手机定位服务', 'Turn on location services'),
+        LocationFailure.permissionDenied =>
+          tr('需要位置权限才能记录地点', 'Location permission is required'),
+        LocationFailure.permissionDeniedForever => tr(
+              '位置权限已关闭，请在系统设置中允许 Echo 使用位置',
+              'Location is off — allow Echo in system settings',
+            ),
+        LocationFailure.timeout => tr(
+              '定位超时，请到开阔处后重试',
+              'Location timed out — try again in an open area',
+            ),
+        LocationFailure.unavailable => tr(
+              '暂时无法获取位置，请稍后再试',
+              'Cannot get location right now — try again later',
+            ),
         null => '',
       };
 }

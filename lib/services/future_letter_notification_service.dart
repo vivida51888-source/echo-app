@@ -46,7 +46,7 @@ class FutureLetterNotificationService {
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
 
-    const channel = AndroidNotificationChannel(
+    final channel = AndroidNotificationChannel(
       _channelId,
       FutureLetterCopy.notificationChannelName,
       description: FutureLetterCopy.notificationChannelDescription,

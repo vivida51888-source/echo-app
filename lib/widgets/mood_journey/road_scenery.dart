@@ -1,7 +1,8 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/localized.dart';
 import '../../models/mood_journey.dart';
 import '../../models/weather_mood.dart';
 import '../../services/echo_stats_service.dart';
@@ -521,9 +522,9 @@ class StartSegmentPainter extends CustomPainter {
     );
 
     final title = TextPainter(
-      text: const TextSpan(
-        text: '回响启程',
-        style: TextStyle(
+      text: TextSpan(
+        text: tr('回响启程', 'Echo departure'),
+        style: const TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
           color: Color(0xFFE8F5E9),
@@ -696,9 +697,9 @@ class FinishSegmentPainter extends CustomPainter {
     );
 
     final title = TextPainter(
-      text: const TextSpan(
-        text: '回响驿站',
-        style: TextStyle(
+      text: TextSpan(
+        text: tr('回响驿站', 'Echo station'),
+        style: const TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
           color: Color(0xFFFFF8E1),
@@ -735,7 +736,9 @@ class JourneyStartSegment extends StatelessWidget {
             top: 10,
             left: 10,
             child: Text(
-              isMonthView ? '这一月，从这里出发' : '这一段，从这里出发',
+              isMonthView
+                  ? tr('这一月，从这里出发', 'This month starts here')
+                  : tr('这一段，从这里出发', 'This stretch starts here'),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w300,
@@ -748,7 +751,7 @@ class JourneyStartSegment extends StatelessWidget {
             left: 12,
             bottom: 8,
             child: Text(
-              '启程 · 心情地图',
+              tr('启程 · 心情地图', 'Depart · mood map'),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
@@ -816,7 +819,9 @@ class MoodRoadSegment extends StatelessWidget {
                         border: Border.all(color: EchoColors.dayDivider.withValues(alpha: 0.6)),
                       ),
                       child: Text(
-                        mood != null ? '${mood.emoji} ${mood.label}' : '未书写',
+                        mood != null
+                            ? '${mood.emoji} ${mood.label}'
+                            : tr('未书写', 'Unwritten'),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -894,7 +899,9 @@ class JourneyFinishSegment extends StatelessWidget {
             top: 10,
             right: 10,
             child: Text(
-              isMonthView ? '这一月，已存档' : '这一段，已存档',
+              isMonthView
+                  ? tr('这一月，已存档', 'This month archived')
+                  : tr('这一段，已存档', 'This stretch archived'),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w300,
@@ -918,7 +925,7 @@ class JourneyFinishSegment extends StatelessWidget {
             left: 12,
             bottom: 8,
             child: Text(
-              '抵达 · $count 天回响已收录',
+              tr('抵达 · $count 天回响已收录', 'Arrived · $count days of echoes'),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,

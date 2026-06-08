@@ -1,18 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/photo_wall_frame_style.dart';
 import '../models/photo_wall_material.dart';
 import '../navigation/app_page_route.dart';
 import '../services/echo_insight_service.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../services/echo_stats_service.dart';
+import '../pages/keepsakes_page.dart';
+import '../services/echo_reward_service.dart';
 import '../services/photo_wall_settings_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
 import '../utils/diary_format.dart';
 import '../widgets/echo_controls.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_photo_wall.dart';
 import '../widgets/photo_wall_export_sheet.dart';
 import '../widgets/photo_wall_poster.dart';
@@ -179,15 +185,12 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
 
     if (!mounted) return;
     setState(() => _exporting = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok ? '海报已保存到相册' : '保存失败，请检查相册权限',
-          style: TextStyle(fontWeight: FontWeight.w300),
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: EchoColors.dayTextPrimary,
-      ),
+    showEchoBriefHint(
+      context,
+      message: ok
+          ? tr('海报已保存到相册', 'Poster saved to Photos')
+          : tr('保存失败，请检查相册权限', 'Save failed — check Photos permission'),
+      tone: ok ? EchoBriefHintTone.success : EchoBriefHintTone.gentle,
     );
   }
 
@@ -200,41 +203,73 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
 
   String _wallEmptyLine(EchoPeriodStatistics stats) {
     if (_isCurrentPeriod(stats)) {
-      return '这些日子，还悄悄留在文字里';
+      return tr(
+        '这些日子，还悄悄留在文字里',
+        'These days still live quietly in your words',
+      );
     }
-    return '那些日子，悄悄留在了文字里';
+    return tr(
+      '那些日子，悄悄留在了文字里',
+      'Those days stayed quietly in your words',
+    );
   }
 
   String _wallPhotoLine(EchoPeriodStatistics stats) {
-    final prefix = _isCurrentPeriod(stats) ? '这些日子' : '那些日子';
+    final prefix = _isCurrentPeriod(stats)
+        ? tr('这些日子', 'These days')
+        : tr('那些日子', 'Those days');
     final count = stats.photoCount;
     final mood = stats.dominantMood;
 
     String base;
     if (stats.isWeekly) {
       if (count == 1) {
-        base = '$prefix，也悄悄留下了一张画面';
+        base = tr(
+          '$prefix，也悄悄留下了一张画面',
+          '$prefix, one image quietly appeared',
+        );
       } else if (count <= 3) {
-        base = '$prefix，好几帧画面悄悄贴上了墙';
+        base = tr(
+          '$prefix，好几帧画面悄悄贴上了墙',
+          '$prefix, a few frames pinned to the wall',
+        );
       } else if (count <= 6) {
-        base = '$prefix，许多瞬间悄悄收进了墙里';
+        base = tr(
+          '$prefix，许多瞬间悄悄收进了墙里',
+          '$prefix, many moments gathered on the wall',
+        );
       } else {
-        base = '$prefix，散落的照片悄悄拼成一面墙';
+        base = tr(
+          '$prefix，散落的照片悄悄拼成一面墙',
+          '$prefix, scattered photos became a wall',
+        );
       }
     } else {
       if (count == 1) {
-        base = '$prefix，也悄悄留下了一张画面';
+        base = tr(
+          '$prefix，也悄悄留下了一张画面',
+          '$prefix, one image quietly appeared',
+        );
       } else if (count <= 10) {
-        base = '$prefix，好几帧画面悄悄贴上了墙';
+        base = tr(
+          '$prefix，好几帧画面悄悄贴上了墙',
+          '$prefix, a few frames pinned to the wall',
+        );
       } else if (count <= 24) {
-        base = '$prefix，许多瞬间悄悄收进了墙里';
+        base = tr(
+          '$prefix，许多瞬间悄悄收进了墙里',
+          '$prefix, many moments gathered on the wall',
+        );
       } else {
-        base = '$prefix，散落的照片悄悄拼成一面墙';
+        base = tr(
+          '$prefix，散落的照片悄悄拼成一面墙',
+          '$prefix, scattered photos became a wall',
+        );
       }
     }
 
     if (mood != null && count >= 2 && stats.start.day % 3 == 0) {
-      return '$base · ${mood.emoji}${mood.label}居多';
+      return tr('$base · ${mood.emoji}${mood.label}居多', '$base · mostly ${mood.emoji} ${mood.label}');
     }
     return base;
   }
@@ -245,23 +280,30 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
 
   String _wallSectionTitle(EchoPeriodStatistics stats) {
     if (_isCurrentPeriod(stats)) {
-      return stats.isWeekly ? '本周照片墙' : '本月照片墙';
+      return stats.isWeekly
+          ? tr('本周照片墙', 'This week\'s wall')
+          : tr('本月照片墙', 'This month\'s wall');
     }
-    return stats.isWeekly ? '这一周照片墙' : '这一月照片墙';
+    return stats.isWeekly
+        ? tr('这一周照片墙', 'That week\'s wall')
+        : tr('这一月照片墙', 'That month\'s wall');
   }
 
   String _wallSectionSubtitle(EchoPeriodStatistics stats) {
     if (stats.hasPhotos) {
       final style = PhotoWallSettingsService.instance.frameStyle;
       if (style == PhotoWallFrameStyle.filmStrip) {
-        return '长按翻转 · 点图放大 · 背面可吐出胶片';
+        return tr(
+          '长按翻转 · 点图放大 · 背面可吐出胶片',
+          'Long-press to flip · tap to zoom · film strip on back',
+        );
       }
-      return '长按翻转 · 点图放大 · 背面吐出拍立得';
+      return tr(
+        '长按翻转 · 点图放大 · 背面吐出拍立得',
+        'Long-press to flip · tap to zoom · Polaroid on back',
+      );
     }
-    if (_isCurrentPeriod(stats)) {
-      return '这些日子，还悄悄留在文字里';
-    }
-    return '那些日子，悄悄留在了文字里';
+    return _wallEmptyLine(stats);
   }
 
   bool _isCurrentPeriod(EchoPeriodStatistics stats) {
@@ -294,20 +336,25 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
       listenable: Listenable.merge([
         PhotoWallSettingsService.instance,
         _diaryService,
+        LocaleService.instance,
       ]),
       builder: (context, _) {
         final settings = PhotoWallSettingsService.instance;
+        final s = EchoStrings.of();
         final body = [
           if (widget.showHeader) ...[
             Text(
-              '留影',
+              s.hubPhoto,
               style: EchoTypography.displayMedium.copyWith(
                 color: EchoColors.dayTextPrimary,
               ),
             ),
             const SizedBox(height: EchoSpacing.xxs + 2),
             Text(
-              '日记里的照片，拼成一面会讲故事的墙',
+              tr(
+                '日记里的照片，拼成一面会讲故事的墙',
+                'Photos from your journal, arranged as a storytelling wall',
+              ),
               style: EchoTypography.labelMedium.copyWith(
                 color: EchoColors.dayTextWhisper,
               ),
@@ -324,7 +371,8 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
               });
               _persistViewState();
             },
-            labelBuilder: (m) => m == _WallMode.week ? '按周' : '按月',
+            labelBuilder: (m) =>
+                m == _WallMode.week ? tr('按周', 'By week') : tr('按月', 'By month'),
           ),
           const SizedBox(height: EchoSpacing.xs),
           EchoPeriodNavigatorBar(
@@ -389,7 +437,9 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 2),
                           child: Text(
-                            _exporting ? '保存中…' : '保存海报',
+                            _exporting
+                                ? tr('保存中…', 'Saving…')
+                                : tr('保存海报', 'Save poster'),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w300,
@@ -415,10 +465,18 @@ class _EchoPhotoWallPanelState extends State<EchoPhotoWallPanel> {
                 ),
                 const SizedBox(height: 32),
                 _WallSectionLabel(
-                  title: stats.isWeekly ? '两周对照' : '两月对照',
+                  title: stats.isWeekly
+                      ? tr('两周对照', 'Two weeks')
+                      : tr('两月对照', 'Two months'),
                   subtitle: stats.isWeekly
-                      ? '左右滑动页面其他区域，切换周次对比'
-                      : '左右滑动页面其他区域，切换月份对比',
+                      ? tr(
+                          '左右滑动页面其他区域，切换周次对比',
+                          'Swipe elsewhere on the page to compare weeks',
+                        )
+                      : tr(
+                          '左右滑动页面其他区域，切换月份对比',
+                          'Swipe elsewhere on the page to compare months',
+                        ),
                 ),
                 const SizedBox(height: 16),
                 EchoPhotoWallCompare(
@@ -493,6 +551,18 @@ class _WallMaterialPicker extends StatelessWidget {
       await onPickCustomWall();
       return;
     }
+    if (!EchoRewardService.instance.isWallUnlocked(picked)) {
+      if (!context.mounted) return;
+      showEchoBriefHint(
+        context,
+        message: tr('在回响小铺解锁此墙面', 'Unlock this wall in Echo shop'),
+        tone: EchoBriefHintTone.gentle,
+        icon: Icons.lock_outline_rounded,
+        actionLabel: tr('前往', 'Go'),
+        onAction: () => openKeepsakesPage(context),
+      );
+      return;
+    }
     onMaterialChanged(picked);
   }
 
@@ -516,7 +586,7 @@ class _WallMaterialPicker extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  '墙面',
+                  tr('墙面', 'Wall'),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -551,7 +621,7 @@ class _WallMaterialPicker extends StatelessWidget {
           Row(
             children: [
               Text(
-                '照片样式',
+                tr('照片样式', 'Photo style'),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -565,7 +635,7 @@ class _WallMaterialPicker extends StatelessWidget {
                   segments: PhotoWallFrameStyle.values,
                   selected: frameStyle,
                   onChanged: onFrameStyleChanged,
-                  labelBuilder: (s) => s.label,
+                  labelBuilder: (s) => s.localizedLabel,
                 ),
               ),
             ],
@@ -596,7 +666,9 @@ class _WallMaterialPicker extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      pinSoundEnabled ? '钉墙音效开' : '钉墙音效关',
+                      pinSoundEnabled
+                          ? tr('钉墙音效开', 'Pin sound on')
+                          : tr('钉墙音效关', 'Pin sound off'),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w300,
@@ -624,7 +696,9 @@ class _WallMaterialPicker extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      showPhotoDates ? '显示照片日期' : '隐藏照片日期',
+                      showPhotoDates
+                          ? tr('显示照片日期', 'Show dates')
+                          : tr('隐藏照片日期', 'Hide dates'),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w300,
@@ -642,6 +716,24 @@ class _WallMaterialPicker extends StatelessWidget {
       ),
     );
   }
+}
+
+void _pickWallMaterial(BuildContext context, PhotoWallMaterial material) {
+  if (!EchoRewardService.instance.isWallUnlocked(material)) {
+    showEchoBriefHint(
+      context,
+      message: tr('在回响小铺解锁此墙面', 'Unlock this wall in Echo shop'),
+      tone: EchoBriefHintTone.gentle,
+      icon: Icons.lock_outline_rounded,
+      actionLabel: tr('前往', 'Go'),
+      onAction: () {
+        Navigator.pop(context);
+        openKeepsakesPage(context);
+      },
+    );
+    return;
+  }
+  Navigator.pop(context, material);
 }
 
 class _WallMaterialSheet extends StatelessWidget {
@@ -676,7 +768,7 @@ class _WallMaterialSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              '选择墙面',
+              tr('选择墙面', 'Choose wall'),
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w400,
@@ -685,7 +777,7 @@ class _WallMaterialSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             if (frameStyle == PhotoWallFrameStyle.filmStrip) ...[
-              const _SheetSectionLabel('基础'),
+              _SheetSectionLabel(tr('基础', 'Basic')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -693,14 +785,15 @@ class _WallMaterialSheet extends StatelessWidget {
                 children: [
                   for (final m in options)
                     _MaterialChip(
-                      label: m.label,
+                      label: m.localizedLabel,
                       selected: selected == m,
-                      onTap: () => Navigator.pop(context, m),
+                      locked: !EchoRewardService.instance.isWallUnlocked(m),
+                      onTap: () => _pickWallMaterial(context, m),
                     ),
                 ],
               ),
             ] else ...[
-              const _SheetSectionLabel('基础'),
+              _SheetSectionLabel(tr('基础', 'Basic')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -708,14 +801,15 @@ class _WallMaterialSheet extends StatelessWidget {
                 children: [
                   for (final m in PhotoWallMaterial.basic)
                     _MaterialChip(
-                      label: m.label,
+                      label: m.localizedLabel,
                       selected: selected == m,
-                      onTap: () => Navigator.pop(context, m),
+                      locked: !EchoRewardService.instance.isWallUnlocked(m),
+                      onTap: () => _pickWallMaterial(context, m),
                     ),
                 ],
               ),
               const SizedBox(height: 20),
-              const _SheetSectionLabel('自然景色'),
+              _SheetSectionLabel(tr('自然景色', 'Nature')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -723,18 +817,20 @@ class _WallMaterialSheet extends StatelessWidget {
                 children: [
                   for (final m in PhotoWallMaterial.natureSeasons)
                     _MaterialChip(
-                      label: m.label,
+                      label: m.localizedLabel,
                       selected: selected == m,
-                      onTap: () => Navigator.pop(context, m),
+                      locked: !EchoRewardService.instance.isWallUnlocked(m),
+                      onTap: () => _pickWallMaterial(context, m),
                     ),
                 ],
               ),
               const SizedBox(height: 20),
-              const _SheetSectionLabel('更多'),
+              _SheetSectionLabel(tr('更多', 'More')),
               const SizedBox(height: 10),
               _MaterialChip(
-                label: PhotoWallMaterial.custom.label,
+                label: PhotoWallMaterial.custom.localizedLabel,
                 selected: selected == PhotoWallMaterial.custom,
+                locked: false,
                 onTap: () => Navigator.pop(context, PhotoWallMaterial.custom),
               ),
             ],
@@ -768,11 +864,13 @@ class _MaterialChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.locked = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -791,15 +889,28 @@ class _MaterialChip extends StatelessWidget {
             width: 0.5,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w400 : FontWeight.w300,
-            color: selected
-                ? EchoColors.dayTextPrimary
-                : EchoColors.dayTextSecondary,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (locked) ...[
+              Icon(
+                Icons.lock_outline,
+                size: 12,
+                color: EchoColors.dayTextWhisper,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w400 : FontWeight.w300,
+                color: selected
+                    ? EchoColors.dayTextPrimary
+                    : EchoColors.dayTextSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

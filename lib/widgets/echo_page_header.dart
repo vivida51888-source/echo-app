@@ -74,13 +74,25 @@ class EchoHeaderAction extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onTap,
+    this.accent,
+    this.iconSize = 20,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
+  final Color? accent;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = accent ?? EchoColors.onSurface;
+    final fill = accent != null
+        ? accent!.withValues(alpha: EchoColors.isDark ? 0.16 : 0.12)
+        : EchoColors.daySurface;
+    final border = accent != null
+        ? accent!.withValues(alpha: EchoColors.isDark ? 0.28 : 0.22)
+        : EchoColors.dayDivider;
+
     return ScaleTap(
       onTap: onTap,
       scale: 0.92,
@@ -88,11 +100,11 @@ class EchoHeaderAction extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: EchoColors.daySurface,
+          color: fill,
           borderRadius: BorderRadius.circular(EchoRadii.full),
-          border: Border.all(color: EchoColors.dayDivider, width: 0.5),
+          border: Border.all(color: border, width: 0.5),
         ),
-        child: Icon(icon, size: 20, color: EchoColors.onSurface),
+        child: Icon(icon, size: iconSize, color: iconColor),
       ),
     );
   }

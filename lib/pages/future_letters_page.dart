@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/future_letter.dart';
 import '../navigation/app_page_route.dart';
 import '../services/future_letter_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../utils/diary_format.dart';
 import '../utils/future_letter_copy.dart';
+import '../services/echo_reward_service.dart';
 import '../widgets/echo_action_sheet.dart';
+import '../widgets/echo_confirm_sheet.dart';
+import '../widgets/echo_hint.dart';
+import '../widgets/echo_moment_toast.dart';
 import '../widgets/echo_charm.dart';
+import '../widgets/echo_coin_collect_overlay.dart';
+import '../widgets/echo_coin_icon.dart';
 import '../widgets/echo_empty_state.dart';
-import '../pages/keepsakes_page.dart';
-import '../services/echo_collectible_service.dart';
+import '../widgets/future_letter_stationery.dart';
 import '../widgets/scale_tap.dart';
 
 class FutureLettersPage extends StatefulWidget {
@@ -56,19 +64,7 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
       return;
     }
 
-    if (!letter.isDue()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            FutureLetterCopy.sealedHint,
-            style: TextStyle(fontWeight: FontWeight.w300),
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: EchoColors.dayTextPrimary,
-        ),
-      );
-      return;
-    }
+    if (!letter.isDue()) return;
 
     await Navigator.of(context).push(
       AppPageRoute<void>(
@@ -77,13 +73,74 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
     );
   }
 
+  Future<void> _openEarly(FutureLetter letter) async {
+    if (letter.isOpened || letter.isDue()) return;
+
+    final cost = letter.earlyOpenCoinCost();
+    final daysLeft = letter.daysUntil();
+    final rewards = EchoRewardService.instance;
+    if (!rewards.canAffordCoins(cost)) {
+      await showEchoMomentToast(
+        context,
+        message: tr(
+          '回响币不足，还需 ${cost - rewards.coins} 枚',
+          'Need ${cost - rewards.coins} more Echo coins',
+        ),
+        kind: EchoMomentToastKind.coins,
+      );
+      return;
+    }
+    final confirmed = await showEchoConfirmSheet(
+      context,
+      title: tr('提前拆开', 'Open early'),
+      message: FutureLetterCopy.earlyOpenPrompt(cost, daysLeft),
+      confirmLabel: tr('消耗 $cost 回响币拆开', 'Open for $cost coins'),
+      leading: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: const Color(0xFFC99A3A).withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: EchoCoinIcon(size: 26),
+        ),
+      ),
+    );
+    if (!confirmed || !mounted) return;
+    final ok = await _service.openEarly(letter.id);
+    if (!mounted) return;
+    if (ok) {
+      await EchoCoinCollectOverlay.playSpend(context, amount: cost);
+    }
+    if (!mounted) return;
+    if (!ok) {
+      showEchoBriefHint(
+        context,
+        message: tr('拆开失败，请稍后再试', 'Could not open — try again'),
+        tone: EchoBriefHintTone.gentle,
+      );
+      return;
+    }
+    final updated = _service.items.firstWhere((l) => l.id == letter.id);
+    await Navigator.of(context).push(
+      AppPageRoute<void>(
+        builder: (_) =>
+            _FutureLetterReadPage(letter: updated, openOnEnter: true),
+      ),
+    );
+  }
+
   Future<void> _confirmDelete(FutureLetter letter) async {
     final ok = await showEchoActionSheet<bool>(
       context: context,
-      message: '删除这封信？\n封存的内容将无法找回。',
+      message: tr(
+        '删除这封信？\n封存的内容将无法找回。',
+        'Delete this letter?\nSealed content cannot be recovered.',
+      ),
       actions: [
-        const EchoActionSheetItem(
-          label: '删除',
+        EchoActionSheetItem(
+          label: EchoStrings.current.delete,
           value: true,
           isDestructive: true,
         ),
@@ -101,7 +158,10 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
     final opened = _service.openedItems;
     final isEmpty = due.isEmpty && pending.isEmpty && opened.isEmpty;
 
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        return Scaffold(
       backgroundColor: EchoColors.appBackground,
       body: SafeArea(
         child: Column(
@@ -159,7 +219,9 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      _service.remindersEnabled ? '送达提醒开' : '送达提醒关',
+                      _service.remindersEnabled
+                          ? tr('送达提醒开', 'Delivery reminders on')
+                          : tr('送达提醒关', 'Delivery reminders off'),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w300,
@@ -187,7 +249,7 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
                       padding: const EdgeInsets.fromLTRB(28, 8, 28, 100),
                       children: [
                         if (due.isNotEmpty) ...[
-                          const _SectionLabel('今日可拆'),
+                          _SectionLabel(tr('今日可拆', 'Ready today')),
                           ...due.map(
                             (l) => _LetterTile(
                               letter: l,
@@ -199,18 +261,19 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
                           const SizedBox(height: 20),
                         ],
                         if (pending.isNotEmpty) ...[
-                          const _SectionLabel('封存中'),
+                          _SectionLabel(tr('封存中', 'Sealed')),
                           ...pending.map(
                             (l) => _LetterTile(
                               letter: l,
                               onTap: () => _openLetter(l),
+                              onEarlyOpen: () => _openEarly(l),
                               onDelete: () => _confirmDelete(l),
                             ),
                           ),
                           const SizedBox(height: 20),
                         ],
                         if (opened.isNotEmpty) ...[
-                          const _SectionLabel('已拆开'),
+                          _SectionLabel(tr('已拆开', 'Opened')),
                           ...opened.map(
                             (l) => _LetterTile(
                               letter: l,
@@ -231,28 +294,48 @@ class _FutureLettersPageState extends State<FutureLettersPage> {
         scale: 0.96,
         child: Container(
           margin: const EdgeInsets.only(right: 8, bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           decoration: BoxDecoration(
-            color: EchoColors.dayTextPrimary,
-            borderRadius: BorderRadius.circular(24),
+            color: EchoColors.isDark
+                ? const Color(0xFF353230)
+                : const Color(0xFFEADFD0),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: EchoColors.dayDivider.withValues(alpha: 0.75),
+              width: 0.6,
+            ),
             boxShadow: [
               BoxShadow(
-                color: EchoColors.dayTextPrimary.withValues(alpha: 0.18),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: EchoColors.dayTextPrimary.withValues(alpha: 0.12),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: Text(
-            '写一封信',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: EchoColors.daySurface,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: EchoColors.dayTextSecondary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                tr('写一封信', 'Write a letter'),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: EchoColors.dayTextPrimary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+      },
     );
   }
 }
@@ -283,112 +366,113 @@ class _LetterTile extends StatelessWidget {
     required this.letter,
     required this.onTap,
     required this.onDelete,
+    this.onEarlyOpen,
     this.highlight = false,
     this.opened = false,
   });
 
   final FutureLetter letter;
   final VoidCallback onTap;
+  final VoidCallback? onEarlyOpen;
   final VoidCallback onDelete;
   final bool highlight;
   final bool opened;
 
+  FutureLetterVisualState get _visualState {
+    if (opened) return FutureLetterVisualState.opened;
+    if (highlight) return FutureLetterVisualState.ready;
+    return FutureLetterVisualState.sealed;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final status = FutureLetterCopy.listStatus(letter);
-    final tint = highlight
-        ? const Color(0xFFE8EEF5)
-        : opened
-            ? EchoColors.dayWriting.withValues(alpha: 0.35)
-            : EchoColors.daySurface;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: ScaleTap(
-        onTap: onTap,
-        scale: 0.99,
-        child: Container(
-          decoration: BoxDecoration(
-            color: tint,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: highlight
-                  ? const Color(0xFFB8C8D8).withValues(alpha: 0.55)
-                  : EchoColors.dayDivider.withValues(alpha: 0.65),
-              width: 0.5,
+    final tappable = opened || highlight;
+    final envelope = FutureLetterEnvelopeTile(
+      letter: letter,
+      state: _visualState,
+      onDelete: onDelete,
+      footer: onEarlyOpen == null
+          ? null
+          : _EarlyOpenButton(
+              cost: letter.earlyOpenCoinCost(),
+              onTap: onEarlyOpen!,
             ),
+    );
+
+    if (!tappable) return envelope;
+
+    return ScaleTap(
+      onTap: onTap,
+      scale: 0.985,
+      child: envelope,
+    );
+  }
+}
+
+class _EarlyOpenButton extends StatelessWidget {
+  const _EarlyOpenButton({
+    required this.cost,
+    required this.onTap,
+  });
+
+  final int cost;
+  final VoidCallback onTap;
+
+  static const _coinTint = Color(0xFFC99A3A);
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTap(
+      onTap: onTap,
+      scale: 0.96,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: EchoColors.daySurface,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: _coinTint.withValues(alpha: 0.35),
+            width: 0.6,
           ),
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  opened
-                      ? Icons.mail_outline
-                      : highlight
-                          ? Icons.mark_email_unread_outlined
-                          : Icons.lock_outline,
-                  size: 18,
-                  color: highlight
-                      ? EchoColors.dayTextPrimary
-                      : EchoColors.dayTextWhisper,
-                ),
+          boxShadow: [
+            BoxShadow(
+              color: EchoColors.dayTextPrimary.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const EchoCoinIcon(size: 16),
+            const SizedBox(width: 7),
+            Text(
+              tr('提前拆开', 'Open early'),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: EchoColors.dayTextPrimary,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      opened ? letter.previewLine() : '封存中的信',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: opened
-                            ? EchoColors.dayTextPrimary
-                            : EchoColors.dayTextSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w300,
-                        color: highlight
-                            ? EchoColors.dayTextSecondary
-                            : EchoColors.dayTextWhisper,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${DiaryFormat.listDateLabel(letter.deliverAt)} 送达',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w300,
-                        color: EchoColors.dayTextWhisper,
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                width: 0.5,
+                height: 14,
+                color: EchoColors.dayDivider.withValues(alpha: 0.8),
               ),
-              ScaleTap(
-                onTap: onDelete,
-                scale: 0.9,
-                child: Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(
-                    Icons.more_horiz,
-                    size: 18,
-                    color: EchoColors.dayTextWhisper,
-                  ),
-                ),
+            ),
+            Text(
+              '$cost',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _coinTint,
+                fontFeatures: [FontFeature.tabularFigures()],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -431,7 +515,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
       initialDate: _customDate ?? today,
       firstDate: first,
       lastDate: now.add(const Duration(days: 365 * 5)),
-      helpText: '选择送达日',
+      helpText: tr('选择送达日', 'Choose delivery date'),
     );
     if (picked != null) {
       setState(() {
@@ -450,22 +534,14 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
         deliverAt: _deliverAt,
       );
       if (!mounted) return;
-      final seed = EchoCollectibleService.instance.takeLastEarned();
-      if (seed != null) {
-        showCollectibleEarnedSnack(context, seed);
-      }
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e is ArgumentError ? '${e.message}' : '保存失败',
-            style: TextStyle(fontWeight: FontWeight.w300),
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: EchoColors.dayTextPrimary,
-        ),
+      showEchoBriefHint(
+        context,
+        message: e is ArgumentError ? '${e.message}' : tr('保存失败', 'Save failed'),
+        tone: EchoBriefHintTone.gentle,
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -505,7 +581,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Text(
-                        _saving ? '封存中…' : '封存',
+                        _saving ? tr('封存中…', 'Sealing…') : tr('封存', 'Seal'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
@@ -524,7 +600,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                 children: [
                   Text(
-                    '写给未来的自己',
+                    tr('写给未来的自己', 'To your future self'),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w300,
@@ -533,7 +609,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '将在 $deliverLabel 送达',
+                    tr('将在 $deliverLabel 送达', 'Due on $deliverLabel'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w300,
@@ -554,7 +630,10 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                       height: 1.65,
                     ),
                     decoration: InputDecoration(
-                      hintText: '想对未来的自己说什么…',
+                      hintText: tr(
+                        '想对未来的自己说什么…',
+                        'What do you want to tell your future self…',
+                      ),
                       hintStyle: TextStyle(
                         fontWeight: FontWeight.w300,
                         color: EchoColors.dayTextWhisper,
@@ -576,8 +655,8 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color:
-                              EchoColors.dayTextSecondary.withValues(alpha: 0.45),
+                          color: EchoColors.dayTextSecondary
+                              .withValues(alpha: 0.45),
                         ),
                       ),
                       contentPadding: const EdgeInsets.all(16),
@@ -590,7 +669,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    '何时送达',
+                    tr('何时送达', 'Deliver when'),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w300,
@@ -614,7 +693,7 @@ class _FutureLetterComposePageState extends State<_FutureLetterComposePage> {
                         ),
                       _PresetChip(
                         label: _customDate == null
-                            ? '自选日期'
+                            ? tr('自选日期', 'Pick a date')
                             : DiaryFormat.listDateLabel(_customDate!),
                         selected: _customDate != null,
                         onTap: _pickCustomDate,
@@ -746,7 +825,7 @@ class _FutureLetterReadPageState extends State<_FutureLetterReadPage> {
                 padding: const EdgeInsets.fromLTRB(28, 8, 28, 40),
                 children: [
                   Text(
-                    '来自过去的你',
+                    tr('来自过去的你', 'From your past self'),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w300,

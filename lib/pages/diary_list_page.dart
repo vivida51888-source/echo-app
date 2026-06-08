@@ -9,6 +9,7 @@ import '../services/diary_service.dart';
 import '../services/echo_tree_service.dart';
 
 import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../services/locale_service.dart';
 
 import '../widgets/echo_hub_carousel.dart';
@@ -63,17 +64,24 @@ class DiaryListPage extends StatefulWidget {
 
 class _DiaryListPageState extends State<DiaryListPage> {
 
-  static const _moduleSubtitles = [
-
-    '日记里的照片，拼成一面会讲故事的墙',
-
-    '按时间轴、月与周浏览你的文字',
-
-    '写回响得雨露，浇灌你的树',
-
-    '看心情流转，也看阴晴圆缺',
-
-  ];
+  static List<String> get _moduleSubtitles => [
+        tr(
+          '日记里的照片，拼成一面会讲故事的墙',
+          'Photos from echoes become a storytelling wall',
+        ),
+        tr(
+          '按时间轴、月与周浏览你的文字',
+          'Browse your words by timeline, month, or week',
+        ),
+        tr(
+          '写回响得雨露，浇灌你的树',
+          'Write echoes for dew — water your tree',
+        ),
+        tr(
+          '看心情流转，也看阴晴圆缺',
+          'Watch moods shift — sun and rain alike',
+        ),
+      ];
 
 
 

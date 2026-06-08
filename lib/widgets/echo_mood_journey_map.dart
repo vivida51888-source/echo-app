@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../models/mood_journey.dart';
 import '../models/weather_mood.dart';
 import '../services/echo_stats_service.dart';
@@ -40,10 +41,20 @@ class EchoMoodJourneyMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (days.isEmpty) {
-      return _emptyState('还没有标记心情\n写作时选一种天气，这里会慢慢亮起来');
+      return _emptyState(
+        tr(
+          '还没有标记心情\n写作时选一种天气，这里会慢慢亮起来',
+          'No moods yet\nPick weather when you write — this map will light up',
+        ),
+      );
     }
     if (!days.any((d) => d.hasDiary)) {
-      return _emptyState('这一段还没有标记心情\n写回响时选一种天气，沿途风景会慢慢亮起来');
+      return _emptyState(
+        tr(
+          '这一段还没有标记心情\n写回响时选一种天气，沿途风景会慢慢亮起来',
+          'No moods in this period yet\nPick weather when you write — scenery will unfold',
+        ),
+      );
     }
 
     final segments = isWeekly
@@ -61,15 +72,21 @@ class EchoMoodJourneyMap extends StatelessWidget {
 
     return _JourneyShell(
       caption: isWeekly
-          ? '从启程之门出发，滑动卷轴看天气如何流转'
-          : '一月一路，每段是一周的主调天气',
+          ? tr(
+              '从启程之门出发，滑动卷轴看天气如何流转',
+              'From the gate — scroll to watch weather shift',
+            )
+          : tr(
+              '一月一路，每段是一周的主调天气',
+              'A month on the road — each segment is a week\'s mood',
+            ),
       child: ride,
     );
   }
 }
 
 class _EmptyJourneyCard extends StatelessWidget {
-  const _EmptyJourneyCard({this.message = '还没有标记心情\n写作时选一种天气，这里会慢慢亮起来'});
+  const _EmptyJourneyCard({required this.message});
 
   final String message;
 
@@ -276,10 +293,12 @@ class _MoodJourneyRoadRideState extends State<MoodJourneyRoadRide>
             ? '$week · $range · ${mood.emoji} ${mood.label}'
             : '$week · ${mood.emoji} ${mood.label}';
       }
-      return range != null ? '$week · $range · 本周尚无回响' : '$week · 本周尚无回响';
+      final empty = tr('本周尚无回响', 'No echoes this week');
+      return range != null ? '$week · $range · $empty' : '$week · $empty';
     }
+    final notWritten = tr('尚未写下', 'Not written');
     return '${DiaryFormat.listDateLabel(segment.stat.date)}'
-        '${mood != null ? ' · ${mood.emoji} ${mood.label}' : ' · 尚未写下'}';
+        '${mood != null ? ' · ${mood.emoji} ${mood.label}' : ' · $notWritten'}';
   }
 
   @override
@@ -300,10 +319,14 @@ class _MoodJourneyRoadRideState extends State<MoodJourneyRoadRide>
             : null;
 
         final title = atFinish
-            ? (widget.isMonthView ? '抵达回响驿站 · 这一月已存档' : '抵达回响驿站 · 这一段已存档')
+            ? (widget.isMonthView
+                ? tr('抵达回响驿站 · 这一月已存档', 'Echo station · month archived')
+                : tr('抵达回响驿站 · 这一段已存档', 'Echo station · stretch archived'))
             : _statusTitle(current, mood);
         final subtitle = atFinish
-            ? (widget.isMonthView ? '本月的心情，都收在这里了' : '本周的心情，都收在这里了')
+            ? (widget.isMonthView
+                ? tr('本月的心情，都收在这里了', 'This month\'s moods, gathered here')
+                : tr('本周的心情，都收在这里了', 'This week\'s moods, gathered here'))
             : moodSceneryCaption(kind);
 
         final cyclistLeft = vw * MoodJourneyLayout.cyclistViewportRatio - 28;
@@ -439,7 +462,9 @@ class _MoodJourneyRoadRideState extends State<MoodJourneyRoadRide>
                                   ),
                                 ),
                                 child: Text(
-                                  _riding ? '骑行中…' : '出发',
+                                  _riding
+                                      ? tr('骑行中…', 'Riding…')
+                                      : tr('出发', 'Go'),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 12,

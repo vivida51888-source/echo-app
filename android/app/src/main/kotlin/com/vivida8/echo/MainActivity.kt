@@ -1,4 +1,4 @@
-package com.example.echo_app
+package com.vivida8.echo
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

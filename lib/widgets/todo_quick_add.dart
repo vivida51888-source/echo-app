@@ -8,15 +8,29 @@ import 'scale_tap.dart';
 
 /// 待办列表状态分段（待完成 / 已休眠 / 已安放）。
 enum TodoListTab {
-  pending(TodoCopy.pendingSection, Icons.wb_sunny_outlined, Color(0xFF6FAF82)),
-  sleeping(TodoCopy.sleepingSection, Icons.nights_stay_outlined, Color(0xFF7A8FA8)),
-  completed(TodoCopy.completedSection, Icons.check_circle_outline, Color(0xFF7BA889));
+  pending,
+  sleeping,
+  completed,
+}
 
-  const TodoListTab(this.label, this.hubIcon, this.hubTint);
+extension TodoListTabUi on TodoListTab {
+  String get label => switch (this) {
+        TodoListTab.pending => TodoCopy.pendingSection,
+        TodoListTab.sleeping => TodoCopy.sleepingSection,
+        TodoListTab.completed => TodoCopy.completedSection,
+      };
 
-  final String label;
-  final IconData hubIcon;
-  final Color hubTint;
+  IconData get hubIcon => switch (this) {
+        TodoListTab.pending => Icons.wb_sunny_outlined,
+        TodoListTab.sleeping => Icons.nights_stay_outlined,
+        TodoListTab.completed => Icons.check_circle_outline,
+      };
+
+  Color get hubTint => switch (this) {
+        TodoListTab.pending => const Color(0xFF6FAF82),
+        TodoListTab.sleeping => const Color(0xFF7A8FA8),
+        TodoListTab.completed => const Color(0xFF7BA889),
+      };
 }
 
 enum TodoListFilterMode { all, important, category }
@@ -48,10 +62,11 @@ class TodoCategoryFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (echoStyle) {
+      final categoryCount = TodoCategory.values.length;
       return ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: TodoCategory.values.length + 2,
+        itemCount: categoryCount + 2,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           if (index == 0) {
@@ -73,7 +88,7 @@ class TodoCategoryFilterBar extends StatelessWidget {
           }
           final category = TodoCategory.values[index - 2];
           return _EchoFilterChip(
-            label: category.label,
+            label: category.localizedLabel,
             icon: category.icon,
             tint: category.color,
             selected:
@@ -106,7 +121,7 @@ class TodoCategoryFilterBar extends StatelessWidget {
                 ),
               ),
               _MinimalFilter(
-                label: category.label,
+                label: category.localizedLabel,
                 selected: selected == category,
                 color: category.color,
                 onTap: () => onChanged?.call(category),
@@ -134,7 +149,7 @@ class TodoCategoryFilterBar extends StatelessWidget {
         }
         final category = TodoCategory.values[index - 1];
         return _FilterChip(
-          label: category.label,
+          label: category.localizedLabel,
           selected: selected == category,
           color: category.color,
           icon: category.icon,

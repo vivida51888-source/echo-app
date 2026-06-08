@@ -1,47 +1,100 @@
+import '../l10n/localized.dart';
+
 /// Echo 单篇回响底句：按形态分档 + 关键词 + 稳定轮换。
 abstract final class EchoSummaryCopy {
-  static const imageOnly = [
-    '这一帧画面，Echo 也替你留住了。',
-    '没写字也没关系，照片会说话。',
-    '有些日子，一张图就够回忆了。',
-  ];
+  static List<String> get imageOnly => trList(
+        [
+          '这一帧画面，Echo 也替你留住了。',
+          '没写字也没关系，照片会说话。',
+          '有些日子，一张图就够回忆了。',
+        ],
+        [
+          'Echo kept this frame for you.',
+          'No words needed — the photo speaks.',
+          'Some days, one image is enough.',
+        ],
+      );
 
-  static const blank = [
-    '空白也是一种记录，以后或许会想起这一刻。',
-    '什么都没写，但你来过这里。',
-  ];
+  static List<String> get blank => trList(
+        [
+          '空白也是一种记录，以后或许会想起这一刻。',
+          '什么都没写，但你来过这里。',
+        ],
+        [
+          'Blank space is still a record — you may remember later.',
+          'Nothing written, but you were here.',
+        ],
+      );
 
-  static const ultraShort = [
-    '短短几句，也像在对自己轻轻说话。',
-    '字不多，心意到了就好。',
-    '轻飘飘的几句，也值得被留下。',
-    '不必写长，真实就够了。',
-    '你肯开口，就已经很好了。',
-  ];
+  static List<String> get ultraShort => trList(
+        [
+          '短短几句，也像在对自己轻轻说话。',
+          '字不多，心意到了就好。',
+          '轻飘飘的几句，也值得被留下。',
+          '不必写长，真实就够了。',
+          '你肯开口，就已经很好了。',
+        ],
+        [
+          'A few words, like talking gently to yourself.',
+          'Short and sincere is enough.',
+          'Light lines are still worth keeping.',
+          'No need for length — honesty is enough.',
+          'Speaking up at all is already good.',
+        ],
+      );
 
-  static const short = [
-    '一小段话，装下了一整天的心情。',
-    '不多不少，刚好说出此刻。',
-    '这些字很轻，但会留得很久。',
-    '像对自己悄悄交代了一句。',
-  ];
+  static List<String> get short => trList(
+        [
+          '一小段话，装下了一整天的心情。',
+          '不多不少，刚好说出此刻。',
+          '这些字很轻，但会留得很久。',
+          '像对自己悄悄交代了一句。',
+        ],
+        [
+          'A small paragraph holds a whole day.',
+          'Just enough to say this moment.',
+          'Light words that will stay a long time.',
+          'Like a quiet note to yourself.',
+        ],
+      );
 
-  static const medium = [
-    '这一刻被记下来了，以后会慢慢显出意义。',
-    '你把自己的一天，安放得很仔细。',
-    '文字里藏着细小的温柔，Echo 替你留住了。',
-    '有些感受，写下来就轻了一点。',
-    '普通的一天，也值得被好好安放。',
-  ];
+  static List<String> get medium => trList(
+        [
+          '这一刻被记下来了，以后会慢慢显出意义。',
+          '你把自己的一天，安放得很仔细。',
+          '文字里藏着细小的温柔，Echo 替你留住了。',
+          '有些感受，写下来就轻了一点。',
+          '普通的一天，也值得被好好安放。',
+        ],
+        [
+          'This moment is saved — meaning will grow later.',
+          'You placed your day with care.',
+          'Small tenderness in the words — Echo kept it.',
+          'Some feelings lighten when written down.',
+          'An ordinary day still deserves a gentle place.',
+        ],
+      );
 
-  static const long = [
-    '你写了很多，Echo 会好好替你收着。',
-    '长长的回响，是留给未来自己的信。',
-    '愿意说这么多，说明你在认真生活。',
-    '这一篇，以后翻回来会很有分量。',
-  ];
+  static List<String> get long => trList(
+        [
+          '你写了很多，Echo 会好好替你收着。',
+          '长长的回响，是留给未来自己的信。',
+          '愿意说这么多，说明你在认真生活。',
+          '这一篇，以后翻回来会很有分量。',
+        ],
+        [
+          'You wrote a lot — Echo will keep it safe.',
+          'A long echo is a letter to your future self.',
+          'Saying this much means you are living attentively.',
+          'This entry will carry weight when you return.',
+        ],
+      );
 
-  static const keywordPools = <String, List<String>>{
+  static Map<String, List<String>> get keywordPools => isEnUi
+      ? _keywordPoolsEn
+      : _keywordPoolsZh;
+
+  static const _keywordPoolsZh = <String, List<String>>{
     '疲惫': [
       '今天的你似乎有些疲惫，但也仍在认真地生活。',
       '累的时候还记得记录，已经很了不起。',
@@ -88,6 +141,67 @@ abstract final class EchoSummaryCopy {
     ],
   };
 
+  static const _keywordPoolsEn = <String, List<String>>{
+    'tired': [
+      'You seem tired today, yet still living with care.',
+      'Recording when exhausted is already remarkable.',
+    ],
+    'gentle': [
+      'Small tenderness in the words — Echo kept it.',
+      'This entry is a gentle gift to yourself.',
+    ],
+    'lonely': [
+      'Quiet solitude is its own kind of echo.',
+      'Alone or not, the world has not forgotten you.',
+    ],
+    'happy': [
+      'A light moment today — worth noting.',
+      'Joy need not be loud; a quiet note is fine.',
+    ],
+    'rain': [
+      'Rainy feelings, gently held in your words.',
+      'Words written in rain are often especially still.',
+    ],
+    'late night': [
+      'Still thinking late — be kind to yourself.',
+      'Late-night words, Echo will keep them softly.',
+    ],
+    'friends': [
+      'Connection with others is a bright page in life.',
+      'Someone to think of and write about is a gift.',
+    ],
+    'family': [
+      'Thoughts of home are quiet and deep.',
+      'Words about family are worth keeping.',
+    ],
+    'work': [
+      'A busy day, yet you left a little space for yourself.',
+      'Lines stolen between tasks are precious.',
+    ],
+    'exercise': [
+      'Days you move — body remembers, words remember.',
+      'After a walk or workout, the mind often clears.',
+    ],
+    'study': [
+      'Learning and noting gives days new texture.',
+      'Writing thoughts down feels steadier than holding them.',
+    ],
+  };
+
+  static final Map<String, String> _zhToEnKeyword = {
+    '疲惫': 'tired',
+    '温柔': 'gentle',
+    '孤独': 'lonely',
+    '开心': 'happy',
+    '下雨': 'rain',
+    '熬夜': 'late night',
+    '朋友': 'friends',
+    '家人': 'family',
+    '工作': 'work',
+    '运动': 'exercise',
+    '学习': 'study',
+  };
+
   static List<String> generalForTier(int tier) {
     switch (tier) {
       case 3:
@@ -101,7 +215,13 @@ abstract final class EchoSummaryCopy {
     }
   }
 
-  static List<String>? keywordPool(String key) => keywordPools[key];
+  static List<String>? keywordPool(String key) {
+    if (isEnUi) {
+      final enKey = _zhToEnKeyword[key] ?? key;
+      return _keywordPoolsEn[enKey];
+    }
+    return _keywordPoolsZh[key];
+  }
 
   static String pick(List<String> pool, String seed) {
     if (pool.isEmpty) return '';

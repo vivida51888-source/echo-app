@@ -1,14 +1,18 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/chinese_zodiac.dart';
 import '../models/diary.dart';
 import '../models/echo_mood_book.dart';
 import '../models/weather_mood.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../services/echo_mood_book_service.dart';
 import '../services/echo_stats_service.dart';
 import '../theme/echo_colors.dart';
+import '../theme/echo_radii.dart';
 import '../utils/diary_format.dart';
 import '../widgets/echo_action_sheet.dart';
 import '../widgets/echo_controls.dart';
@@ -162,7 +166,7 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
           backgroundColor: EchoColors.daySurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            '为书架命名',
+            tr('为书架命名', 'Name the bookshelf'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w400,
@@ -213,7 +217,7 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
               TextButton(
                 onPressed: () => Navigator.pop(context, ''),
                 child: Text(
-                  '恢复默认',
+                  tr('恢复默认', 'Reset default'),
                   style: TextStyle(
                     fontWeight: FontWeight.w300,
                     color: EchoColors.dayTextSecondary,
@@ -223,7 +227,7 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                '取消',
+                tr('取消', 'Cancel'),
                 style: TextStyle(
                   fontWeight: FontWeight.w300,
                   color: EchoColors.dayTextSecondary,
@@ -233,7 +237,7 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
             TextButton(
               onPressed: () => Navigator.pop(context, controller.text),
               child: Text(
-                '保存',
+                EchoStrings.current.save,
                 style: TextStyle(
                   fontWeight: FontWeight.w400,
                   color: EchoColors.dayTextPrimary,
@@ -286,7 +290,10 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
         ),
         const SizedBox(height: 8),
         Text(
-          '写下的日子会在这里，排成一年的书架',
+          tr(
+            '写下的日子会在这里，排成一年的书架',
+            'Days you write line up here as a year\'s bookshelf',
+          ),
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w300,
@@ -323,8 +330,8 @@ class _MoodBookshelfPanelState extends State<MoodBookshelfPanel> {
               SizedBox(height: widget.compact ? 8 : 12),
               Text(
                 _filledCount == 0
-                    ? '这一年还没有写下回响'
-                    : '$_filledCount 个月有回响 · 轻触书脊翻阅',
+                    ? tr('这一年还没有写下回响', 'No echoes written this year yet')
+                    : (tr('$_filledCount 个月有回响 · 轻触书脊翻阅', '$_filledCount months with echoes · tap spines to browse')),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -363,7 +370,9 @@ class _ZodiacBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = zodiac.theme;
-    final maxWidth = (MediaQuery.sizeOf(context).width - 96).clamp(220.0, 268.0);
+    final maxWidth =
+        (MediaQuery.sizeOf(context).width - 96).clamp(220.0, 268.0);
+    final titleLine = tr('$year · ${zodiac.label}年', '$year · ${zodiac.localizedLabel}');
 
     return Center(
       child: ConstrainedBox(
@@ -389,32 +398,36 @@ class _ZodiacBanner extends StatelessWidget {
             children: [
               Text(zodiac.emoji, style: TextStyle(fontSize: 22, height: 1)),
               const SizedBox(width: 10),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$year · ${zodiac.label}年',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: EchoColors.dayTextPrimary,
-                      height: 1.2,
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titleLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: EchoColors.dayTextPrimary,
+                        height: 1.2,
+                      ),
                     ),
-                  ),
-                  Text(
-                    theme.tagline,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w300,
-                      color: EchoColors.dayTextSecondary,
-                      fontStyle: FontStyle.italic,
-                      height: 1.2,
+                    Text(
+                      theme.localizedTagline,
+                      maxLines: isEnUi ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isEnUi ? 10 : 11,
+                        fontWeight: FontWeight.w300,
+                        color: EchoColors.dayTextSecondary,
+                        fontStyle: FontStyle.italic,
+                        height: 1.2,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -559,7 +572,7 @@ class _YearPickerSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '选择年份',
+              tr('选择年份', 'Choose year'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -568,7 +581,7 @@ class _YearPickerSheet extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '不同年份对应不同生肖书架',
+              tr('不同年份对应不同生肖书架', 'Each year has its zodiac bookshelf'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w300,
@@ -620,7 +633,7 @@ class _YearPickerSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '$year · ${zodiac.label}年',
+                                  tr('$year · ${zodiac.label}年', '$year · ${zodiac.emoji}'),
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: selected
@@ -631,14 +644,15 @@ class _YearPickerSheet extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  theme.tagline,
-                                  maxLines: 1,
+                                  theme.localizedTagline,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w300,
                                     color: EchoColors.dayTextSecondary,
                                     fontStyle: FontStyle.italic,
+                                    height: 1.35,
                                   ),
                                 ),
                               ],
@@ -682,7 +696,10 @@ class _LegendStrip extends StatelessWidget {
 
     if (items.isEmpty) {
       return Text(
-        '写下的日子会在这里，排成一年的书架',
+        tr(
+          '写下的日子会在这里，排成一年的书架',
+          'Days you write line up here as a year\'s bookshelf',
+        ),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 13,
@@ -694,40 +711,50 @@ class _LegendStrip extends StatelessWidget {
       );
     }
 
+    final maxChipWidth = (MediaQuery.sizeOf(context).width - 104) / 2;
+
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 10,
       runSpacing: 10,
       children: items.map((m) {
         final color = WeatherMood.spineColor(m.display);
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: EchoColors.daySurface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: EchoColors.dayDivider, width: 0.5),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(2),
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxChipWidth.clamp(120.0, 168.0)),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: EchoColors.daySurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: EchoColors.dayDivider, width: 0.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${m.emoji} ${m.label}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: EchoColors.dayTextSecondary,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${m.emoji} ${m.label}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: EchoColors.dayTextSecondary,
+                      height: 1.25,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -780,7 +807,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
           backgroundColor: EchoColors.daySurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            '为这一册命名',
+            tr('为这一册命名', 'Name this volume'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w400,
@@ -797,7 +824,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
               color: EchoColors.dayTextPrimary,
             ),
             decoration: InputDecoration(
-              hintText: '如：春日絮语、雨夜独白…',
+              hintText: tr('如：春日絮语、雨夜独白…', 'e.g. Spring notes, rainy night…'),
               hintStyle: TextStyle(
                 color: EchoColors.dayTextWhisper.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w300,
@@ -831,7 +858,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
               TextButton(
                 onPressed: () => Navigator.pop(context, ''),
                 child: Text(
-                  '恢复默认',
+                  tr('恢复默认', 'Reset default'),
                   style: TextStyle(
                     fontWeight: FontWeight.w300,
                     color: EchoColors.dayTextSecondary,
@@ -841,7 +868,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                '取消',
+                tr('取消', 'Cancel'),
                 style: TextStyle(
                   fontWeight: FontWeight.w300,
                   color: EchoColors.dayTextSecondary,
@@ -851,7 +878,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
             TextButton(
               onPressed: () => Navigator.pop(context, controller.text),
               child: Text(
-                '保存',
+                EchoStrings.current.save,
                 style: TextStyle(
                   fontWeight: FontWeight.w400,
                   color: EchoColors.dayTextPrimary,
@@ -892,7 +919,7 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
       if (actions.isEmpty) return;
       diaryId = await showEchoActionSheet<String>(
         context: context,
-        message: '${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} 篇回响',
+        message: tr('${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} 篇回响', '${DiaryFormat.listDateLabel(day.date)} · ${day.entryCount} echoes'),
         actions: actions,
       );
     }
@@ -1028,8 +1055,8 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
                               const SizedBox(height: 8),
                               Text(
                                 current.hasEntries
-                                    ? '这个月，${current.dominantEmoji} ${current.dominantLabel} 最多'
-                                    : '空白的一页，等待被写入',
+                                    ? (tr('这个月，${current.dominantEmoji} ${current.dominantLabel} 最多', 'This month, ${current.dominantEmoji} ${current.dominantLabel} most'))
+                                    : tr('空白的一页，等待被写入', 'A blank page, waiting to be written'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w300,
@@ -1041,8 +1068,8 @@ class _MoodBookDetailPageState extends State<MoodBookDetailPage> {
                               if (current.hasEntries) ...[
                                 const SizedBox(height: 14),
                                 _HeaderStat(
-                                  label: '记下',
-                                  value: '${stats.diaryDayCount} 天',
+                                  label: tr('记下', 'Days'),
+                                  value: tr('${stats.diaryDayCount} 天', '${stats.diaryDayCount} days'),
                                 ),
                               ],
                             ],
@@ -1180,7 +1207,7 @@ class _EmptyMonthCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '还没有这一月的回响',
+            tr('还没有这一月的回响', 'No echoes this month yet'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w300,
@@ -1189,7 +1216,10 @@ class _EmptyMonthCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '写下的日子会在这里变成心情月历',
+            tr(
+              '写下的日子会在这里变成心情月历',
+              'Written days become a mood calendar here',
+            ),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -1250,7 +1280,7 @@ class _CalendarCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '心情月历',
+                  tr('心情月历', 'Mood calendar'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w400,
@@ -1259,9 +1289,13 @@ class _CalendarCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '记下 ${stats.diaryDayCount} 天'
-                  '${stats.diaryEntryCount > stats.diaryDayCount ? ' · 共 ${stats.diaryEntryCount} 篇' : ''}'
-                  ' · 点日期读回响',
+                  isEnUi
+                      ? '${stats.diaryDayCount} days recorded'
+                          '${stats.diaryEntryCount > stats.diaryDayCount ? ' · ${stats.diaryEntryCount} entries' : ''}'
+                          ' · tap a date to read'
+                      : '记下 ${stats.diaryDayCount} 天'
+                          '${stats.diaryEntryCount > stats.diaryDayCount ? ' · 共 ${stats.diaryEntryCount} 篇' : ''}'
+                          ' · 点日期读回响',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w300,
@@ -1303,7 +1337,7 @@ class _MoodBreakdown extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '心情分布',
+            tr('心情分布', 'Mood mix'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w400,
@@ -1366,39 +1400,41 @@ Future<void> showMoodBookshelfSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.22),
     builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.74,
-        minChildSize: 0.48,
-        maxChildSize: 0.92,
-        builder: (context, scrollController) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              color: EchoColors.appBackground,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                Container(
+      final bottom = MediaQuery.viewPaddingOf(context).bottom;
+
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
+        decoration: BoxDecoration(
+          color: EchoColors.appBackground,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(EchoRadii.xl),
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(0, 12, 0, bottom + 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: EchoColors.sheetHandle,
+                    color: EchoColors.dayDivider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Expanded(
-                  child: MoodBookshelfPanel(
-                    scrollController: scrollController,
-                    compact: true,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: MoodBookshelfPanel(compact: true),
+              ),
+            ],
+          ),
+        ),
       );
     },
   );

@@ -1,3 +1,5 @@
+import '../l10n/localized.dart';
+
 /// 待来日：每年循环；起点日：从某天起累计。
 enum ImportantDayMode {
   annual('待来日'),
@@ -54,6 +56,25 @@ enum ImportantDayKind {
       ImportantDayKind.other,
     ];
   }
+
+  String get localizedLabel => switch (this) {
+        ImportantDayKind.birthday => tr('生日', 'Birthday'),
+        ImportantDayKind.anniversary => tr('纪念', 'Anniversary'),
+        ImportantDayKind.together => tr('相遇', 'Together'),
+        ImportantDayKind.work => tr('入职', 'Started work'),
+        ImportantDayKind.study => tr('上学', 'Started school'),
+        ImportantDayKind.married => tr('结婚', 'Married'),
+        ImportantDayKind.dating => tr('恋爱', 'Dating'),
+        ImportantDayKind.met => tr('相识', 'Met'),
+        ImportantDayKind.other => tr('其他', 'Other'),
+      };
+}
+
+extension ImportantDayModeL10n on ImportantDayMode {
+  String get localizedLabel => switch (this) {
+        ImportantDayMode.annual => tr('待来日', 'Upcoming'),
+        ImportantDayMode.anchor => tr('起点日', 'Since'),
+      };
 }
 
 /// 起点日达到的刻度：第 N 天，或满 N 年。

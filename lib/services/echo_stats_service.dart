@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../models/todo_category.dart';
 import '../models/weather_mood.dart';
@@ -409,7 +410,7 @@ class EchoStatsService {
 
   String _previewLine(String content) {
     final line = content.split('\n').first.trim();
-    if (line.isEmpty) return '这一篇还没有文字';
+    if (line.isEmpty) return tr('这一篇还没有文字', 'No text in this entry yet');
     if (line.length <= 40) return line;
     return '${line.substring(0, 40)}…';
   }

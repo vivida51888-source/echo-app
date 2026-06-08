@@ -58,6 +58,9 @@ dependencies:
   screen_protector: ^1.5.2
   crypto: ^3.0.6
   intl: ^0.20.2
+  in_app_purchase: ^3.2.3
+  in_app_purchase_android: ^0.5.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -98,6 +101,7 @@ flutter:
   assets:
     - assets/images/zh/
     - assets/images/en/
+    - assets/l10n/
     - assets/images/splash_screen.png
     - assets/images/film_frame_template.png
     - assets/images/photo_wall_cork.png

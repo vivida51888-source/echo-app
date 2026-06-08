@@ -6,7 +6,7 @@ import '../models/todo_reminder.dart';
 import '../models/todo_subtask.dart';
 import '../utils/china_workday_calendar.dart';
 import '../utils/todo_schedule.dart';
-import 'echo_collectible_service.dart';
+import 'echo_reward_service.dart';
 import 'echo_tree_service.dart';
 
 class TodoService extends ChangeNotifier {
@@ -236,7 +236,7 @@ class TodoService extends ChangeNotifier {
     if (todo.repeat == TodoRepeat.none) {
       await _put(todo.copyWith(completedAt: now, clearLastCompleted: true));
       await EchoTreeService.instance.checkDailyTodoBonus(now);
-      await EchoCollectibleService.instance.onTodoCompleted(now);
+      await EchoRewardService.instance.onTodoCompleted(now);
       return;
     }
 
@@ -249,7 +249,7 @@ class TodoService extends ChangeNotifier {
       ),
     );
     await EchoTreeService.instance.checkDailyTodoBonus(now);
-    await EchoCollectibleService.instance.onTodoCompleted(now);
+    await EchoRewardService.instance.onTodoCompleted(now);
   }
 
   Future<void> uncomplete(String id) async {
@@ -398,7 +398,7 @@ class TodoService extends ChangeNotifier {
       }
       await _put(next);
       await EchoTreeService.instance.checkDailyTodoBonus(now);
-      await EchoCollectibleService.instance.onTodoCompleted(now);
+      await EchoRewardService.instance.onTodoCompleted(now);
       return;
     }
     await _put(next);

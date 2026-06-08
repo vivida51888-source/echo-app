@@ -1,7 +1,8 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
 import '../models/weather_mood.dart';
 import '../services/echo_stats_service.dart';
 import '../theme/echo_colors.dart';
@@ -19,15 +20,20 @@ class MoodCyclePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!stats.hasMoodActivity) {
-      return const _EmptyStatCard(
+      return _EmptyStatCard(
         charm: EchoCharmKind.cloud,
-        message: '这一段还没有标记心情\n写回响时选一种天气，阴晴圆缺会慢慢显形',
+        message: tr(
+          '这一段还没有标记心情\n写回响时选一种天气，阴晴圆缺会慢慢显形',
+          'No moods marked in this period yet.\nPick weather when you write — patterns will emerge.',
+        ),
       );
     }
 
     final slots = stats.allMoodSlots;
     final total = stats.totalMoodDays;
-    final span = stats.isWeekly ? '本周' : '本月';
+    final span = stats.isWeekly
+        ? tr('本周', 'This week')
+        : tr('本月', 'This month');
     final dominant = stats.dominantMood;
 
     return Column(
@@ -62,7 +68,7 @@ class MoodCyclePanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '天',
+                      tr('天', 'days'),
                       style: EchoTypography.caption.copyWith(
                         color: EchoColors.dayTextSecondary,
                       ),
@@ -76,8 +82,8 @@ class MoodCyclePanel extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           dominant != null
-              ? '$span · 主调 ${dominant.emoji} ${dominant.label}'
-              : '$span · 已标记 $total 天',
+              ? (tr('$span · 主调 ${dominant.emoji} ${dominant.label}', '$span · mostly ${dominant.emoji} ${dominant.label}'))
+              : (tr('$span · 已标记 $total 天', '$span · $total days marked')),
           textAlign: TextAlign.center,
           style: EchoTypography.labelLarge.copyWith(
             fontWeight: FontWeight.w300,
@@ -88,7 +94,7 @@ class MoodCyclePanel extends StatelessWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            '五种天象',
+            tr('五种天象', 'Five skies'),
             style: EchoTypography.caption.copyWith(
               fontWeight: FontWeight.w400,
               color: EchoColors.dayTextWhisper,
@@ -167,7 +173,7 @@ class MoodDayBar extends StatelessWidget {
           SizedBox(
             width: 36,
             child: Text(
-              '${mood.count} 天',
+              tr('${mood.count} 天', '${mood.count} d'),
               textAlign: TextAlign.right,
               style: TextStyle(
                 fontSize: 12,

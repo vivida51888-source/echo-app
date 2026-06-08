@@ -1,12 +1,15 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../models/weather_mood.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../services/echo_insight_service.dart';
 import '../theme/echo_colors.dart';
 import '../utils/diary_copy.dart';
@@ -29,7 +32,6 @@ class _MoodTab {
   final bool favoritesOnly;
 }
 
-const _kFavoriteTab = _MoodTab(label: '收藏', favoritesOnly: true);
 
 class EchoRecordsPage extends StatefulWidget {
   const EchoRecordsPage({
@@ -62,7 +64,13 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
   bool _searchExpanded = false;
   String? _flashingDiaryId;
 
-  late final List<_MoodTab> _moodTabs;
+  List<_MoodTab> get _moodTabs => [
+        _MoodTab(label: DiaryCopy.moodFilterAll),
+        _MoodTab(label: tr('收藏', 'Favorites'), favoritesOnly: true),
+        ...WeatherMood.options.map(
+          (m) => _MoodTab(label: m.display, mood: m.display),
+        ),
+      ];
 
   @override
   void initState() {
@@ -71,13 +79,6 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
     _pickedYear = now.year;
     _pickedMonth = now.month;
     _pickedWeekStart = EchoInsightService.startOfWeek(now);
-    _moodTabs = [
-      const _MoodTab(label: DiaryCopy.moodFilterAll),
-      _kFavoriteTab,
-      ...WeatherMood.options.map(
-        (m) => _MoodTab(label: m.display, mood: m.display),
-      ),
-    ];
     _service.addListener(_onDiariesChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -230,20 +231,25 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
   }
 
   Future<void> _showDiaryActions(Diary diary) async {
+    final s = EchoStrings.of();
     final action = await showEchoActionSheet<String>(
       context: context,
       actions: [
-        const EchoActionSheetItem(label: '编辑', value: 'edit'),
+        EchoActionSheetItem(label: s.edit, value: 'edit'),
         EchoActionSheetItem(
-          label: diary.isFavorite ? '取消收藏' : '收藏',
+          label: diary.isFavorite
+              ? tr('取消收藏', 'Remove favorite')
+              : tr('收藏', 'Favorite'),
           value: 'favorite',
         ),
         EchoActionSheetItem(
-          label: diary.inDriftBottle ? '移出漂流瓶' : '放进漂流瓶',
+          label: diary.inDriftBottle
+              ? tr('移出漂流瓶', 'Remove from bottle')
+              : tr('放进漂流瓶', 'Put in bottle'),
           value: 'drift',
         ),
-        const EchoActionSheetItem(
-          label: '删除',
+        EchoActionSheetItem(
+          label: s.delete,
           value: 'delete',
           isDestructive: true,
         ),
@@ -265,12 +271,16 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
   }
 
   Future<void> _confirmDelete(Diary diary) async {
+    final s = EchoStrings.of();
     final confirm = await showEchoActionSheet<bool>(
       context: context,
-      message: '移至回收站？\n15 天内可在设置中恢复。',
-      actions: const [
+      message: tr(
+        '移至回收站？\n15 天内可在设置中恢复。',
+        'Move to recycle bin?\nRecover within 15 days in Settings.',
+      ),
+      actions: [
         EchoActionSheetItem(
-          label: '删除',
+          label: s.delete,
           value: true,
           isDestructive: true,
         ),
@@ -300,7 +310,11 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
       (m) => m.year == _pickedYear && m.month == _pickedMonth,
     );
 
-    return ColoredBox(
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        return ColoredBox(
       color: EchoColors.appBackground,
       child: SafeArea(
         child: Column(
@@ -325,7 +339,7 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
                   ),
                   Expanded(
                     child: Text(
-                      '篇章',
+                      s.hubChapters,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w300,
@@ -420,8 +434,9 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
                 segments: const [_EchoListMode.byMonth, _EchoListMode.byWeek],
                 selected: _mode,
                 onChanged: (m) => setState(() => _mode = m),
-                labelBuilder: (m) =>
-                    m == _EchoListMode.byMonth ? '按月' : '按周',
+                labelBuilder: (m) => m == _EchoListMode.byMonth
+                    ? tr('按月', 'By month')
+                    : tr('按周', 'By week'),
               ),
             ),
             Padding(
@@ -472,7 +487,10 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
                   ? Center(
                       child: EchoEmptyState(
                         charm: EchoCharmKind.diary,
-                        message: '还没有回响\n回到此刻，写下第一篇吧',
+                        message: tr(
+                          '还没有回响\n回到此刻，写下第一篇吧',
+                          'No echoes yet.\nReturn to Moment and write your first.',
+                        ),
                       ),
                     )
                   : PageView.builder(
@@ -488,7 +506,7 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
                             child: Text(
                               _searchController.text.trim().isNotEmpty
                                   ? DiaryCopy.noSearchResult
-                                  : '这一段时间还没有回响',
+                                  : tr('这一段时间还没有回响', 'No echoes in this period'),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w300,
@@ -524,6 +542,8 @@ class _EchoRecordsPageState extends State<EchoRecordsPage> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

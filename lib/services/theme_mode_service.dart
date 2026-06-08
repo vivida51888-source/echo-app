@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../l10n/localized.dart';
 import '../theme/echo_colors.dart';
 
 /// 仅保留日间默认与夜间模式（已移除「跟随系统」「浅色」）。
@@ -8,8 +9,8 @@ enum EchoThemeMode { day, dark }
 
 extension EchoThemeModeLabel on EchoThemeMode {
   String get label => switch (this) {
-        EchoThemeMode.day => '未开启',
-        EchoThemeMode.dark => '已开启',
+        EchoThemeMode.day => tr('未开启', 'Off'),
+        EchoThemeMode.dark => tr('已开启', 'On'),
       };
 }
 

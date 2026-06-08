@@ -8,6 +8,7 @@ import '../models/trashed_diary.dart';
 import '../models/weather_mood.dart';
 import '../utils/diary_format.dart';
 import 'diary_image_storage.dart';
+import 'echo_reward_service.dart';
 import 'echo_tree_service.dart';
 import 'mock_ai_service.dart';
 import 'widget_bridge_service.dart';
@@ -203,6 +204,7 @@ class DiaryService extends ChangeNotifier {
       savedAt: DateTime.now(),
     );
     await WidgetBridgeService.instance.syncFromApp();
+    await EchoRewardService.instance.onDiaryActivity();
     return diary;
   }
 

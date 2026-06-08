@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/todo_category.dart';
 import '../models/todo_reminder.dart';
 import '../models/todo_subtask.dart';
 import '../navigation/app_page_route.dart';
+import '../services/locale_service.dart';
 import '../services/todo_service.dart';
 import '../services/todo_notification_service.dart';
 import '../theme/echo_colors.dart';
+import '../utils/diary_format.dart';
 import '../utils/todo_copy.dart';
 import '../utils/todo_natural_language.dart';
+import '../utils/echo_layout.dart';
 import '../utils/todo_schedule.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/scale_tap.dart';
 
 class TodoEditPage extends StatefulWidget {
@@ -23,11 +29,11 @@ class TodoEditPage extends StatefulWidget {
   State<TodoEditPage> createState() => _TodoEditPageState();
 }
 
-const _relativeReminderPresets = [
-  (label: '30分钟后', duration: Duration(minutes: 30)),
-  (label: '1小时后', duration: Duration(hours: 1)),
-  (label: '2小时后', duration: Duration(hours: 2)),
-  (label: '3小时后', duration: Duration(hours: 3)),
+List<({String label, Duration duration})> get _relativeReminderPresets => [
+  (label: tr('30分钟后', 'In 30 min'), duration: const Duration(minutes: 30)),
+  (label: tr('1小时后', 'In 1 hour'), duration: const Duration(hours: 1)),
+  (label: tr('2小时后', 'In 2 hours'), duration: const Duration(hours: 2)),
+  (label: tr('3小时后', 'In 3 hours'), duration: const Duration(hours: 3)),
 ];
 
 class _TodoEditPageState extends State<TodoEditPage> {
@@ -38,6 +44,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
   late DateTime _reminderAt;
   late TodoRepeat _repeat;
   late TodoCategory _category;
+  late bool _isImportant;
   late List<TodoSubtask> _subtasks;
 
   TodoNaturalLanguageResult? _parsed;
@@ -54,12 +61,14 @@ class _TodoEditPageState extends State<TodoEditPage> {
       _reminderAt = existing.reminderAt;
       _repeat = existing.repeat;
       _category = existing.category;
+      _isImportant = existing.isImportant;
       _subtasks = List.of(existing.subtasks);
       _showManual = true;
     } else {
       _reminderAt = DateTime.now().add(const Duration(hours: 1));
       _repeat = TodoRepeat.none;
       _category = TodoCategory.life;
+      _isImportant = false;
       _subtasks = [];
     }
     _contentController.addListener(_onContentChanged);
@@ -76,7 +85,8 @@ class _TodoEditPageState extends State<TodoEditPage> {
 
   void _onContentChanged() {
     final text = _contentController.text.trim();
-    final parsed = text.isEmpty ? null : TodoNaturalLanguage.parse(text);
+    final parsed =
+        text.isEmpty || isEnUi ? null : TodoNaturalLanguage.parse(text);
     setState(() {
       _parsed = parsed;
       if (parsed != null && parsed.matched && !_scheduleManual) {
@@ -136,7 +146,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
           children: [
             ListTile(
               title: Text(
-                '改日期',
+                tr('改日期', 'Change date'),
                 style: TextStyle(
                   fontWeight: FontWeight.w300,
                   color: EchoColors.dayTextPrimary,
@@ -146,7 +156,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
             ),
             ListTile(
               title: Text(
-                '改时间',
+                tr('改时间', 'Change time'),
                 style: TextStyle(
                   fontWeight: FontWeight.w300,
                   color: EchoColors.dayTextPrimary,
@@ -220,10 +230,10 @@ class _TodoEditPageState extends State<TodoEditPage> {
     if (raw.isEmpty) return;
 
     final parsed = TodoNaturalLanguage.parse(raw);
-    final content = parsed.matched ? parsed.content : raw;
+    final content = !isEnUi && parsed.matched ? parsed.content : raw;
     if (content.isEmpty) return;
 
-    final useParsed = parsed.matched && !_scheduleManual;
+    final useParsed = !isEnUi && parsed.matched && !_scheduleManual;
     final reminderAt = useParsed ? parsed.reminderAt : _reminderAt;
     final repeat = useParsed ? parsed.repeat : _repeat;
     final category = useParsed ? parsed.category : _category;
@@ -241,6 +251,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
         repeat: repeat,
         note: note.isEmpty ? null : note,
         category: category,
+        isImportant: _isImportant,
         subtasks: _subtasks,
         clearCompleted: true,
         clearSleeping: true,
@@ -258,6 +269,9 @@ class _TodoEditPageState extends State<TodoEditPage> {
         subtasks: _subtasks,
       );
       final added = service.getById(id);
+      if (added != null && _isImportant) {
+        await service.setImportant(id, true);
+      }
       if (added != null) {
         await TodoNotificationService.instance.schedule(added);
       }
@@ -265,14 +279,13 @@ class _TodoEditPageState extends State<TodoEditPage> {
 
     if (mounted) {
       if (!notificationsReady) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '请在系统设置中允许通知，才能收到温柔提醒',
-              style: TextStyle(fontWeight: FontWeight.w300),
-            ),
-            behavior: SnackBarBehavior.floating,
+        showEchoBriefHint(
+          context,
+          message: tr(
+            '请在系统设置中允许通知，才能收到温柔提醒',
+            'Allow notifications in system settings for gentle reminders',
           ),
+          tone: EchoBriefHintTone.gentle,
         );
       }
       Navigator.pop(context, true);
@@ -285,7 +298,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
   }
 
   String _formatDateTime(DateTime dt) {
-    return '${dt.month}月${dt.day}日 · ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '${DiaryFormat.listDateLabel(dt)} · ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   int? _matchingPresetIndex() {
@@ -301,10 +314,14 @@ class _TodoEditPageState extends State<TodoEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final parsed = _parsed;
-    final showPreview = parsed != null && parsed.matched && !widget.isEditing;
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        final parsed = _parsed;
+        final showPreview = parsed != null && parsed.matched && !widget.isEditing;
 
-    return Scaffold(
+        return Scaffold(
       backgroundColor: EchoColors.daySurface,
       body: SafeArea(
         child: Column(
@@ -336,7 +353,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
                         vertical: 10,
                       ),
                       child: Text(
-                        '记下',
+                        s.save,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
@@ -411,7 +428,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '${_formatDateTime(_reminderAt)} · ${_category.label}${_repeat == TodoRepeat.none ? '' : ' · ${_repeat.label}'}',
+                              '${_formatDateTime(_reminderAt)} · ${_category.localizedLabel}${_repeat == TodoRepeat.none ? '' : ' · ${_repeat.localizedLabel}'}',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w300,
@@ -461,21 +478,30 @@ class _TodoEditPageState extends State<TodoEditPage> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: TodoCategory.values.map((cat) {
-                          final selected = _category == cat;
-                          return _CategoryChip(
-                            category: cat,
-                            selected: selected,
+                        children: [
+                          _ImportantChip(
+                            selected: _isImportant,
                             onTap: () {
                               _markScheduleManual();
-                              setState(() => _category = cat);
+                              setState(() => _isImportant = !_isImportant);
                             },
-                          );
-                        }).toList(),
+                          ),
+                          ...TodoCategory.values.map((cat) {
+                            final selected = _category == cat;
+                            return _CategoryChip(
+                              category: cat,
+                              selected: selected,
+                              onTap: () {
+                                _markScheduleManual();
+                                setState(() => _category = cat);
+                              },
+                            );
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        '提醒时间',
+                        tr('提醒时间', 'Reminder'),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w300,
@@ -483,14 +509,14 @@ class _TodoEditPageState extends State<TodoEditPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          for (var i = 0;
-                              i < _relativeReminderPresets.length;
-                              i++) ...[
-                            if (i > 0) const SizedBox(width: 8),
-                            Expanded(
-                              child: _QuickTimeChip(
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final narrow = constraints.maxWidth < 340;
+                          final chips = [
+                            for (var i = 0;
+                                i < _relativeReminderPresets.length;
+                                i++)
+                              _QuickTimeChip(
                                 label: _relativeReminderPresets[i].label,
                                 selected: _matchingPresetIndex() == i,
                                 onTap: () => _setReminder(
@@ -500,23 +526,44 @@ class _TodoEditPageState extends State<TodoEditPage> {
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ],
+                          ];
+                          if (narrow) {
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: chips
+                                  .map(
+                                    (c) => SizedBox(
+                                      width: (constraints.maxWidth - 8) / 2,
+                                      child: c,
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          }
+                          return Row(
+                            children: [
+                              for (var i = 0; i < chips.length; i++) ...[
+                                if (i > 0) const SizedBox(width: 8),
+                                Expanded(child: chips[i]),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
                       ScaleTap(
                         onTap: _pickReminderDateTime,
                         scale: 0.98,
                         child: _PickerRow(
-                          label: '自定义',
+                          label: tr('自定义', 'Custom'),
                           value: _formatDateTime(_reminderAt),
                           selected: _matchingPresetIndex() == null,
                         ),
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        '重复',
+                        tr('重复', 'Repeat'),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w300,
@@ -524,47 +571,73 @@ class _TodoEditPageState extends State<TodoEditPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        children: TodoRepeat.values.map((rule) {
-                          final selected = _repeat == rule;
-                          return ScaleTap(
-                            onTap: () {
-                              _markScheduleManual();
-                              setState(() => _repeat = rule);
-                            },
-                            scale: 0.96,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? EchoColors.dayWriting
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: selected
-                                      ? EchoColors.dayDivider
-                                      : EchoColors.dayDivider
-                                          .withValues(alpha: 0.5),
-                                  width: 0.5,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final columns = EchoLayout.repeatChipColumns(context);
+                          final gap = 8.0;
+                          final cellW =
+                              (constraints.maxWidth - gap * (columns - 1)) /
+                                  columns;
+                          return Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: TodoRepeat.editDisplayOrder.map((rule) {
+                              final selected = _repeat == rule;
+                              final isNone = rule == TodoRepeat.none;
+                              return SizedBox(
+                                width: cellW,
+                                child: ScaleTap(
+                                  onTap: () {
+                                    _markScheduleManual();
+                                    setState(() => _repeat = rule);
+                                  },
+                                  scale: 0.96,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? (isNone
+                                              ? EchoColors.appBackground
+                                              : EchoColors.dayWriting)
+                                          : EchoColors.appBackground
+                                              .withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: selected
+                                            ? (isNone
+                                                ? EchoColors.dayDivider
+                                                : EchoColors.dayDivider)
+                                            : EchoColors.dayDivider
+                                                .withValues(alpha: 0.45),
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      rule.localizedLabel,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: selected
+                                            ? FontWeight.w400
+                                            : FontWeight.w300,
+                                        color: selected
+                                            ? EchoColors.dayTextPrimary
+                                            : EchoColors.dayTextSecondary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                rule.label,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w300,
-                                  color: selected
-                                      ? EchoColors.dayTextPrimary
-                                      : EchoColors.dayTextSecondary,
-                                ),
-                              ),
-                            ),
+                              );
+                            }).toList(),
                           );
-                        }).toList(),
+                        },
                       ),
                       if (_repeat.hint case final hint?) ...[
                         const SizedBox(height: 10),
@@ -662,7 +735,7 @@ class _TodoEditPageState extends State<TodoEditPage> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
-                              '添加',
+                              tr('添加', 'Add'),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: EchoColors.dayTextSecondary,
@@ -700,9 +773,60 @@ class _TodoEditPageState extends State<TodoEditPage> {
         ),
       ),
     );
+      },
+    );
   }
 
-  String rawFallback(TodoNaturalLanguageResult parsed) => '待办';
+  String rawFallback(TodoNaturalLanguageResult parsed) =>
+      tr('待办', 'Task');
+}
+
+class _ImportantChip extends StatelessWidget {
+  const _ImportantChip({required this.selected, required this.onTap});
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = EchoColors.todoImportant;
+    return ScaleTap(
+      onTap: onTap,
+      scale: 0.96,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? tint.withValues(alpha: 0.14) : EchoColors.appBackground,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? tint.withValues(alpha: 0.55)
+                : EchoColors.dayDivider.withValues(alpha: 0.8),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+              size: 16,
+              color: tint,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              TodoCopy.importantCategory,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w400 : FontWeight.w300,
+                color: selected ? tint : EchoColors.dayTextSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _CategoryChip extends StatelessWidget {
@@ -741,7 +865,7 @@ class _CategoryChip extends StatelessWidget {
             Icon(category.icon, size: 16, color: category.color),
             const SizedBox(width: 6),
             Text(
-              category.label,
+              category.localizedLabel,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w400 : FontWeight.w300,

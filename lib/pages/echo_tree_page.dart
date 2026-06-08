@@ -1,9 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/echo_tree_growth.dart';
 import '../models/echo_water_bubble.dart';
 import '../navigation/app_page_route.dart';
 import '../services/echo_tree_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../widgets/echo_tree_visual.dart';
 import '../widgets/echo_water_bubbles.dart';
@@ -143,7 +146,7 @@ class _EchoTreePanelState extends State<EchoTreePanel> {
     await _service.waterTree();
     if (mounted) {
       await Future<void>.delayed(const Duration(milliseconds: 400));
-      setState(() => _watering = false);
+      if (mounted) setState(() => _watering = false);
     }
   }
 
@@ -177,7 +180,7 @@ class _EchoTreePanelState extends State<EchoTreePanel> {
       children: [
         if (widget.showHeader) ...[
           Text(
-            '雨露树',
+            EchoStrings.current.hubTree,
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w300,
@@ -189,8 +192,14 @@ class _EchoTreePanelState extends State<EchoTreePanel> {
         ],
         Text(
           widget.showHeader
-              ? '雨露会随机漂在树周围，点能量泡就能收集'
-              : '写回响得雨露 · 点能量泡收集后浇水',
+              ? tr(
+                  '雨露会随机漂在树周围，点能量泡就能收集',
+                  'Dew drifts around the tree — tap bubbles to collect',
+                )
+              : tr(
+                  '写回响得雨露 · 点能量泡收集后浇水',
+                  'Write echoes for dew · collect bubbles, then water',
+                ),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w300,
@@ -199,7 +208,10 @@ class _EchoTreePanelState extends State<EchoTreePanel> {
         ),
         const SizedBox(height: 8),
         Text(
-          '日记 5g · 连续 3–7 天额外奖励 · 雨露保留 2 天',
+          tr(
+            '日记 5g · 连续 3–7 天额外奖励 · 雨露保留 2 天',
+            '5g per entry · 3–7 day streak bonus · dew lasts 2 days',
+          ),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w300,
@@ -288,7 +300,7 @@ class _TreePanel extends StatelessWidget {
                         left: 0,
                         right: 0,
                         child: Text(
-                          '💧 浇水中…',
+                          tr('💧 浇水中…', '💧 Watering…'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -305,7 +317,7 @@ class _TreePanel extends StatelessWidget {
                         left: 0,
                         right: 0,
                         child: Text(
-                          '轻点能量泡收集雨露',
+                          tr('轻点能量泡收集雨露', 'Tap bubbles to collect dew'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 11,
@@ -350,7 +362,7 @@ class _TreePanel extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '已连续记下 ${service.writingStreak} 天',
+                tr('已连续记下 ${service.writingStreak} 天', '${service.writingStreak}-day writing streak'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -384,11 +396,17 @@ class _TreePanel extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _StatChip(label: '记下', value: '${service.uniqueDiaryDays} 天'),
+              _StatChip(
+                label: tr('记下', 'Days'),
+                value: tr('${service.uniqueDiaryDays} 天', '${service.uniqueDiaryDays} days'),
+              ),
               const SizedBox(width: 16),
-              _StatChip(label: '回响', value: '${service.totalEntries} 篇'),
+              _StatChip(
+                label: EchoStrings.current.echoTitle,
+                value: tr('${service.totalEntries} 篇', '${service.totalEntries} entries'),
+              ),
               const SizedBox(width: 16),
-              _StatChip(label: '累计', value: '${growth.lifeWater}g'),
+              _StatChip(label: tr('累计', 'Total'), value: '${growth.lifeWater}g'),
             ],
           ),
           if (service.nextStageHint != null) ...[
@@ -425,7 +443,7 @@ class _WaterStatsRow extends StatelessWidget {
       children: [
         Expanded(
           child: _WaterStat(
-            label: '待收露',
+            label: tr('待收露', 'Pending'),
             value: '${service.pendingWaterTotal}g',
             highlight: service.hasPendingBubbles,
           ),
@@ -437,7 +455,9 @@ class _WaterStatsRow extends StatelessWidget {
         ),
         Expanded(
           child: _WaterStat(
-            label: lastCollected != null ? '刚刚收集' : '已收下',
+            label: lastCollected != null
+                ? tr('刚刚收集', 'Just collected')
+                : tr('已收下', 'Collected'),
             value: lastCollected != null ? '+${lastCollected}g' : '${service.storedWater}g',
             highlight: service.storedWater > 0 || lastCollected != null,
           ),
@@ -508,7 +528,9 @@ class _ActionRow extends StatelessWidget {
       children: [
         Expanded(
           child: _ActionButton(
-            label: canCollect ? '收集雨露' : '暂无雨露',
+            label: canCollect
+                ? tr('收集雨露', 'Collect dew')
+                : tr('暂无雨露', 'No dew yet'),
             icon: Icons.bubble_chart_outlined,
             enabled: canCollect,
             onTap: onCollectAll,
@@ -517,7 +539,9 @@ class _ActionRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _ActionButton(
-            label: canWater ? '浇水 ${service.storedWater}g' : '先收集雨露',
+            label: canWater
+                ? tr('浇水 ${service.storedWater}g', 'Water ${service.storedWater}g')
+                : tr('先收集雨露', 'Collect dew first'),
             icon: Icons.water_drop_outlined,
             enabled: canWater,
             primary: true,
@@ -624,7 +648,7 @@ class _GrowthProgress extends StatelessWidget {
         if (waterToNext != null) ...[
           const SizedBox(height: 8),
           Text(
-            '生长 ${((progress * 100).round())}%',
+            tr('生长 ${((progress * 100).round())}%', 'Growth ${((progress * 100).round())}%'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,

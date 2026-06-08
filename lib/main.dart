@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -10,12 +12,15 @@ import 'services/diary_service.dart';
 import 'services/diary_stationery_service.dart';
 import 'services/echo_appearance_service.dart';
 import 'services/echo_mood_book_service.dart';
-import 'services/echo_collectible_service.dart';
+import 'services/echo_check_in_service.dart';
+import 'services/echo_plus_service.dart';
+import 'services/echo_reward_service.dart';
 import 'services/echo_tree_service.dart';
 import 'services/future_letter_notification_service.dart';
 import 'services/future_letter_service.dart';
 import 'services/important_day_notification_service.dart';
 import 'services/important_day_service.dart';
+import 'l10n/echo_translations.dart';
 import 'services/locale_service.dart';
 import 'services/privacy_service.dart';
 import 'services/theme_mode_service.dart';
@@ -33,7 +38,11 @@ Future<void> main() async {
   await DiaryService.instance.init();
   await DiaryDraftService.instance.init();
   await EchoTreeService.instance.init();
-  await EchoCollectibleService.instance.init();
+  await EchoRewardService.instance.init();
+  await EchoPlusService.instance.init();
+  EchoPlusService.instance
+      .addListener(EchoRewardService.instance.onPlusEntitlementChanged);
+  await EchoCheckInService.instance.init();
   await EchoMoodBookService.instance.init();
   await TodoService.instance.init();
   await ImportantDayService.instance.init();
@@ -42,6 +51,7 @@ Future<void> main() async {
   await EchoAppearanceService.instance.init();
   await DiaryStationeryService.instance.init();
   await ThemeModeService.instance.init();
+  await EchoTranslations.instance.load();
   await LocaleService.instance.init();
   await AppLockService.instance.init();
   await PrivacyService.instance.init();
@@ -75,6 +85,9 @@ class _EchoAppState extends State<EchoApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     PrivacyService.instance.onLifecycleChanged(state);
+    if (state == AppLifecycleState.resumed) {
+      unawaited(EchoPlusService.instance.refreshEntitlement());
+    }
   }
 
   @override

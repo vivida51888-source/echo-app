@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/diary_stationery.dart';
+import '../services/locale_service.dart';
 import '../navigation/app_page_route.dart';
+import '../pages/keepsakes_page.dart';
 import '../services/diary_stationery_service.dart';
+import '../services/echo_reward_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_settings_layout.dart';
 import '../widgets/scale_tap.dart';
 
@@ -17,11 +23,18 @@ class DiaryStationeryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EchoSettingsScaffold(
-      title: '日记信纸',
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        final s = EchoStrings.of();
+        return EchoSettingsScaffold(
+      title: s.diaryStationeryTitle,
       children: [
         Text(
-          '写作页背景，长文时信纸下方会延伸纸本色',
+          tr(
+            '写作页背景，长文时信纸下方会延伸纸本色',
+            'Writing page background; long entries extend the paper tone below',
+          ),
           style: EchoTypography.caption.copyWith(
             color: EchoColors.dayTextWhisper,
             height: 1.5,
@@ -40,8 +53,26 @@ class DiaryStationeryPage extends StatelessWidget {
                     child: _StationeryCard(
                       stationery: stationery,
                       selected: stationery.id == current.id,
-                      onTap: () => DiaryStationeryService.instance
-                          .setStationery(stationery),
+                      locked: !EchoRewardService.instance
+                          .isStationeryUnlocked(stationery.id),
+                      onTap: () {
+                        if (!EchoRewardService.instance
+                            .isStationeryUnlocked(stationery.id)) {
+                          showEchoBriefHint(
+                            context,
+                            message: tr(
+                              '在回响小铺解锁此信纸',
+                              'Unlock this stationery in Echo shop',
+                            ),
+                            tone: EchoBriefHintTone.gentle,
+                            icon: Icons.lock_outline_rounded,
+                            actionLabel: tr('前往', 'Go'),
+                            onAction: () => openKeepsakesPage(context),
+                          );
+                          return;
+                        }
+                        DiaryStationeryService.instance.setStationery(stationery);
+                      },
                     ),
                   ),
               ],
@@ -49,6 +80,8 @@ class DiaryStationeryPage extends StatelessWidget {
           },
         ),
       ],
+    );
+      },
     );
   }
 }
@@ -58,18 +91,22 @@ class _StationeryCard extends StatelessWidget {
     required this.stationery,
     required this.selected,
     required this.onTap,
+    this.locked = false,
   });
 
   final DiaryStationery stationery;
   final bool selected;
   final VoidCallback onTap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
     return ScaleTap(
       onTap: onTap,
       scale: 0.98,
-      child: AnimatedContainer(
+      child: Opacity(
+        opacity: locked ? 0.72 : 1,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(EchoSpacing.md),
@@ -107,14 +144,14 @@ class _StationeryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    stationery.name,
+                    stationery.localizedName,
                     style: EchoTypography.bodyLarge.copyWith(
                       color: EchoColors.dayTextPrimary,
                     ),
                   ),
                   const SizedBox(height: EchoSpacing.xxs),
                   Text(
-                    stationery.subtitle,
+                    stationery.localizedSubtitle,
                     style: EchoTypography.labelMedium.copyWith(
                       color: EchoColors.dayTextSecondary,
                     ),
@@ -122,16 +159,24 @@ class _StationeryCard extends StatelessWidget {
                 ],
               ),
             ),
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              opacity: selected ? 1 : 0,
-              child: Icon(
-                Icons.check_circle_rounded,
-                size: 22,
-                color: DiaryStationeryPage._tint,
+            if (locked)
+              Icon(
+                Icons.lock_outline,
+                size: 20,
+                color: EchoColors.dayTextWhisper,
+              )
+            else
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: selected ? 1 : 0,
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 22,
+                  color: DiaryStationeryPage._tint,
+                ),
               ),
-            ),
           ],
+        ),
         ),
       ),
     );
@@ -225,7 +270,7 @@ class _DiaryStationeryPickerSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '换信纸',
+                tr('换信纸', 'Change stationery'),
                 style: EchoTypography.titleMedium.copyWith(
                   color: EchoColors.dayTextPrimary,
                   fontWeight: FontWeight.w400,
@@ -236,7 +281,7 @@ class _DiaryStationeryPickerSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '左右滑动，点选即可切换',
+                tr('左右滑动，点选即可切换', 'Swipe and tap to switch'),
                 style: EchoTypography.caption.copyWith(
                   color: EchoColors.dayTextWhisper,
                 ),
@@ -257,10 +302,30 @@ class _DiaryStationeryPickerSheet extends StatelessWidget {
                         const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       final stationery = DiaryStationeries.all[index];
+                      final locked = !EchoRewardService.instance
+                          .isStationeryUnlocked(stationery.id);
                       return _PickerStationeryTile(
                         stationery: stationery,
                         selected: stationery.id == current.id,
+                        locked: locked,
                         onTap: () {
+                          if (locked) {
+                            showEchoBriefHint(
+                              context,
+                              message: tr(
+                                '在回响小铺解锁此信纸',
+                                'Unlock this stationery in Echo shop',
+                              ),
+                              tone: EchoBriefHintTone.gentle,
+                              icon: Icons.lock_outline_rounded,
+                              actionLabel: tr('前往', 'Go'),
+                              onAction: () {
+                                Navigator.pop(context);
+                                openKeepsakesPage(context);
+                              },
+                            );
+                            return;
+                          }
                           DiaryStationeryService.instance
                               .setStationery(stationery);
                           Navigator.pop(context);
@@ -283,18 +348,22 @@ class _PickerStationeryTile extends StatelessWidget {
     required this.stationery,
     required this.selected,
     required this.onTap,
+    this.locked = false,
   });
 
   final DiaryStationery stationery;
   final bool selected;
   final VoidCallback onTap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
     return ScaleTap(
       onTap: onTap,
       scale: 0.96,
-      child: SizedBox(
+      child: Opacity(
+        opacity: locked ? 0.55 : 1,
+        child: SizedBox(
         width: 68,
         child: Column(
           children: [
@@ -324,15 +393,28 @@ class _PickerStationeryTile extends StatelessWidget {
                     : null,
               ),
               clipBehavior: Clip.antiAlias,
-              child: StationeryPreview(
-                stationery: stationery,
-                width: 56,
-                height: 76,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  StationeryPreview(
+                    stationery: stationery,
+                    width: 56,
+                    height: 76,
+                  ),
+                  if (locked)
+                    Center(
+                      child: Icon(
+                        Icons.lock_outline,
+                        size: 18,
+                        color: EchoColors.dayTextPrimary.withValues(alpha: 0.55),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              stationery.name,
+              stationery.localizedName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -344,6 +426,7 @@ class _PickerStationeryTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

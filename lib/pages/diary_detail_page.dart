@@ -4,10 +4,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../models/diary.dart';
 import '../navigation/app_page_route.dart';
 import '../services/diary_export_service.dart';
 import '../services/diary_service.dart';
+import '../services/locale_service.dart';
 import '../theme/echo_colors.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
@@ -52,16 +55,19 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
   Widget build(BuildContext context) {
     final diary = _service.getDiaryById(widget.diaryId);
     if (diary == null) {
-      return Scaffold(
+      return ListenableBuilder(
+        listenable: LocaleService.instance,
+        builder: (context, _) => Scaffold(
         backgroundColor: EchoColors.appBackground,
         body: Center(
           child: Text(
-            '这篇回响已不在了',
+            tr('这篇回响已不在了', 'This echo is no longer here'),
             style: EchoTypography.labelMedium.copyWith(
               color: EchoColors.dayTextSecondary,
             ),
           ),
         ),
+      ),
       );
     }
 
@@ -148,21 +154,29 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
   }
 
   Future<void> _showActions(BuildContext context, Diary diary) async {
+    final s = EchoStrings.of();
     final action = await showEchoActionSheet<String>(
       context: context,
       actions: [
-        const EchoActionSheetItem(label: '编辑', value: 'edit'),
-        const EchoActionSheetItem(label: '导出 Word', value: 'export_word'),
+        EchoActionSheetItem(label: s.edit, value: 'edit'),
         EchoActionSheetItem(
-          label: diary.isFavorite ? '取消收藏' : '收藏',
+          label: tr('导出 Word', 'Export Word'),
+          value: 'export_word',
+        ),
+        EchoActionSheetItem(
+          label: diary.isFavorite
+              ? tr('取消收藏', 'Remove favorite')
+              : tr('收藏', 'Favorite'),
           value: 'favorite',
         ),
         EchoActionSheetItem(
-          label: diary.inDriftBottle ? '移出漂流瓶' : '放进漂流瓶',
+          label: diary.inDriftBottle
+              ? tr('移出漂流瓶', 'Remove from bottle')
+              : tr('放进漂流瓶', 'Put in bottle'),
           value: 'drift',
         ),
-        const EchoActionSheetItem(
-          label: '删除',
+        EchoActionSheetItem(
+          label: s.delete,
           value: 'delete',
           isDestructive: true,
         ),
@@ -190,10 +204,13 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
       case 'delete':
         final confirm = await showEchoActionSheet<bool>(
           context: context,
-          message: '移至回收站？\n15 天内可在设置中恢复。',
-          actions: const [
+          message: tr(
+            '移至回收站？\n15 天内可在设置中恢复。',
+            'Move to recycle bin?\nRecover within 15 days in Settings.',
+          ),
+          actions: [
             EchoActionSheetItem(
-              label: '删除',
+              label: s.delete,
               value: true,
               isDestructive: true,
             ),

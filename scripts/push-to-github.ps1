@@ -5,9 +5,9 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
-$GitHubUser = "Vivida"
+$GitHubOrg = "vivida51888-source"
 $RepoName = "echo-app"
-$RemoteUrl = "https://github.com/$GitHubUser/$RepoName.git"
+$RemoteUrl = "https://github.com/$GitHubOrg/$RepoName.git"
 
 function Find-Git {
     $candidates = @(
@@ -45,7 +45,7 @@ if (-not $remote) {
 $status = & $git status --porcelain
 if ($status) {
     $msg = "Initial commit: Echo app and privacy policy for GitHub Pages."
-    & $git -c "user.name=$GitHubUser" -c "user.email=vivida51888@gmail.com" commit -m $msg
+    & $git -c "user.name=vivida51888-source" -c "user.email=vivida51888@gmail.com" commit -m $msg
     Write-Host "Committed changes."
 } else {
     Write-Host "Nothing to commit."
@@ -58,9 +58,9 @@ Write-Host "If prompted, sign in with your GitHub account or Personal Access Tok
 
 Write-Host ""
 Write-Host "Done. Enable GitHub Pages:"
-Write-Host "  https://github.com/$GitHubUser/$RepoName/settings/pages"
+Write-Host "  https://github.com/$GitHubOrg/$RepoName/settings/pages"
 Write-Host "  Source: branch main, folder /docs"
 Write-Host ""
 Write-Host "Privacy policy URLs:"
-Write-Host "  https://$($GitHubUser.ToLower()).github.io/$RepoName/"
-Write-Host "  https://$($GitHubUser.ToLower()).github.io/$RepoName/privacy.html"
+Write-Host "  https://$GitHubOrg.github.io/$RepoName/"
+Write-Host "  https://$GitHubOrg.github.io/$RepoName/privacy.html"

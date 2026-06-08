@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 一组协调的 Echo 纸色底（日间底 + 此刻底 + 衍生表面色）。
 class EchoPalette {
   const EchoPalette({
@@ -235,4 +237,30 @@ abstract final class EchoAppearancePresets {
       _ => warmPaper,
     };
   }
+}
+
+extension EchoAppearancePresetL10n on EchoAppearancePreset {
+  String get localizedName => switch (id) {
+        'pure_white' => tr('素白', 'Pure white'),
+        'warm_paper' => tr('暖纸', 'Warm paper'),
+        'morning_mist' => tr('粉霞', 'Rose dawn'),
+        'morning_mist_deep' => tr('绯霞', 'Deep rose'),
+        'apricot_cream' => tr('雾蓝', 'Mist blue'),
+        'apricot_cream_deep' => tr('紫苑', 'Lavender'),
+        'moss_whisper' => tr('绢黄', 'Silk gold'),
+        'moss_whisper_deep' => tr('青岚', 'Green mist'),
+        _ => name,
+      };
+
+  String get localizedSubtitle => switch (id) {
+        'pure_white' => tr('白净素纸 · 清爽留白', 'Clean white · airy space'),
+        'warm_paper' => tr('淡暖米纸 · 柔和护眼', 'Warm cream · easy on eyes'),
+        'morning_mist' => tr('蔷薇粉纸 · 轻柔温馨', 'Rose pink · soft warmth'),
+        'morning_mist_deep' => tr('加深粉霞 · 更沉静', 'Deeper rose · calmer'),
+        'apricot_cream' => tr('淡雾蓝纸 · 清朗通透', 'Mist blue · clear air'),
+        'apricot_cream_deep' => tr('浅紫纸色 · 静谧柔和', 'Soft lavender · quiet'),
+        'moss_whisper' => tr('淡绢黄纸 · 明亮舒展', 'Silk gold · bright ease'),
+        'moss_whisper_deep' => tr('浅青岚纸 · 清爽自然', 'Green mist · fresh'),
+        _ => subtitle,
+      };
 }

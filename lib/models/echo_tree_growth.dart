@@ -1,3 +1,4 @@
+import '../l10n/localized.dart';
 import 'echo_water_bubble.dart';
 
 abstract final class EchoTreeBubbleRules {
@@ -27,18 +28,32 @@ abstract final class EchoTreeBubbleRules {
 abstract final class EchoTreeGrowthModel {
   static const bubbleMaxAge = Duration(days: 2);
 
-  static const _namedStages = [
-    '种子期',
-    '萌芽期',
-    '幼苗期',
-    '成长期',
-    '壮苗期',
-    '小树期',
-    '枝茂期',
-    '茁壮期',
-    '成树期',
-    '古树期',
-  ];
+  static List<String> get _namedStages => trList(
+        [
+          '种子期',
+          '萌芽期',
+          '幼苗期',
+          '成长期',
+          '壮苗期',
+          '小树期',
+          '枝茂期',
+          '茁壮期',
+          '成树期',
+          '古树期',
+        ],
+        [
+          'Seed',
+          'Sprout',
+          'Seedling',
+          'Growing',
+          'Sapling',
+          'Young tree',
+          'Branching',
+          'Thriving',
+          'Mature',
+          'Ancient',
+        ],
+      );
 
   /// 各阶段累计浇水量（约 2–3 年日常记录可达古树期）。
   static const _stageThresholds = [
@@ -80,7 +95,7 @@ abstract final class EchoTreeGrowthModel {
   static String stageLabel(int stage) {
     if (stage < _namedStages.length) return _namedStages[stage];
     final rings = stage - _namedStages.length + 1;
-    return '守护期 · $rings';
+    return tr('守护期 · $rings', 'Guardian · $rings');
   }
 
   /// 0–6 对应可视化形态；更高阶段复用最成熟形态。

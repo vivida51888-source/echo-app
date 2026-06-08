@@ -1,3 +1,4 @@
+import '../l10n/localized.dart';
 import '../services/future_letter_service.dart';
 import '../services/important_day_service.dart';
 
@@ -72,8 +73,64 @@ abstract final class EchoCopy {
     '晚霞铺陈，替你把辛苦悄悄抚平。',
   ];
 
+  static const _enIndent = '  ';
+
+  static const _enNightPhrases = [
+    'The night is quiet — leave a thought for yourself.',
+    'Moonlight is soft; so can your heart be.',
+    'Before sleep, gift yourself a gentle sentence.',
+    'Stars are faint; let your worries be light.',
+    'The world slows down — you deserve rest.',
+    'Night holds you gently; speak softly to yourself.',
+    'In the dark, you can still see a little light.',
+    'Lay down the day; listen to your heartbeat.',
+    'Late hours are for those still awake — be kind.',
+    'May this night bring good dreams and good sleep.',
+  ];
+
+  static const _enDawnPhrases = [
+    'Morning light arrives — begin softly.',
+    'A new day opens like a blank page.',
+    'Breathe in the dawn; you are allowed to start slow.',
+    'Early light — hope spreads at your feet.',
+    'The world wakes; you are worth a blessing.',
+    'Take the morning without hurry.',
+    'The sky is pale; your heart can be light too.',
+    'A new day begins with thanks to yourself.',
+    'Believe something good may happen today.',
+    'Meet a gentler you in the morning.',
+  ];
+
+  static const _enDayPhrases = [
+    'Afternoon drifts by — capture a small moment.',
+    'Ordinary hours still deserve to be remembered.',
+    'Let today leave a quiet echo.',
+    'Sun on your shoulder — a late comfort.',
+    'Keep this calm in your heart.',
+    'Everyday life glows in small ways.',
+    'Slow down; life is leaning toward you.',
+    'The way you live attentively is already moving.',
+    'Hand worry to the wind; keep steadiness for yourself.',
+    'This day passes — treat yourself gently.',
+  ];
+
+  static const _enDuskPhrases = [
+    'Dusk settles in — put the day down gently.',
+    'The sky fades; keep what mattered.',
+    'Evening is for softer words.',
+    'Sunset ends — you did enough today.',
+    'Twilight is short; tenderness can last.',
+    'The last orange in the sky is today\'s reply.',
+    'Clock out — light a small lamp for yourself.',
+    'Dusk is good for making peace with yourself.',
+    'Night is not deep yet — you are still cared for.',
+    'Evening light smooths the day\'s edges.',
+  ];
+
   /// 温柔句（句首空两格），须为完整短句，按时段与日期稳定轮换。
   static String dailyPhrase(DateTime now) {
+    if (isEnUi) return _enDailyPhrase(now);
+
     final important = ImportantDayService.instance.whisperForHome(now);
     if (important != null) return _indent + _oneSimpleSentence(important);
 
@@ -97,11 +154,37 @@ abstract final class EchoCopy {
     return _indent + pool[daySeed % pool.length];
   }
 
+  static String _enDailyPhrase(DateTime now) {
+    final important = ImportantDayService.instance.whisperForHome(now);
+    if (important != null) return _enIndent + _oneSimpleSentence(important);
+
+    final futureLetter = FutureLetterService.instance.whisperForHome(now);
+    if (futureLetter != null) {
+      return _enIndent + _oneSimpleSentence(futureLetter);
+    }
+
+    final daySeed = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+        86400000;
+
+    final List<String> pool;
+    if (now.hour >= 18 || now.hour < 5) {
+      pool = _enNightPhrases;
+    } else if (now.hour < 10) {
+      pool = _enDawnPhrases;
+    } else if (now.hour >= 17) {
+      pool = _enDuskPhrases;
+    } else {
+      pool = _enDayPhrases;
+    }
+
+    return _enIndent + pool[daySeed % pool.length];
+  }
+
   /// 保证展示为完整句子（取第一句，不截断加省略号）。
   static String _oneSimpleSentence(String raw) {
     final trimmed = raw.trim().replaceAll('\n', '');
     if (trimmed.isEmpty) return trimmed;
-    for (final mark in ['。', '！', '？']) {
+    for (final mark in ['。', '！', '？', '.', '!', '?']) {
       final i = trimmed.indexOf(mark);
       if (i > 0) return trimmed.substring(0, i + 1);
     }

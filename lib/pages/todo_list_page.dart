@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/todo_category.dart';
 import '../models/todo_reminder.dart';
 import '../navigation/app_page_route.dart';
-import '../pages/keepsakes_page.dart';
-import '../services/echo_collectible_service.dart';
 import '../services/echo_stats_service.dart';
 import '../services/todo_notification_service.dart';
 import '../services/todo_service.dart';
@@ -13,10 +11,13 @@ import '../theme/echo_radii.dart';
 import '../theme/echo_spacing.dart';
 import '../theme/echo_typography.dart';
 import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../services/locale_service.dart';
+import '../utils/diary_format.dart';
 import '../utils/todo_copy.dart';
 import '../utils/todo_schedule.dart';
 import '../widgets/echo_action_sheet.dart';
+import '../widgets/echo_hint.dart';
 import '../widgets/echo_charm.dart';
 import '../widgets/echo_controls.dart';
 import '../widgets/echo_empty_state.dart';
@@ -26,6 +27,8 @@ import '../widgets/scale_tap.dart';
 import '../widgets/todo_list_card.dart';
 import '../widgets/todo_quick_add.dart';
 import '../widgets/todo_stats_panel.dart';
+import 'future_letters_page.dart';
+import 'important_days_page.dart';
 import 'todo_edit_page.dart';
 import 'write_diary_page.dart';
 
@@ -99,6 +102,18 @@ class _TodoListPageState extends State<TodoListPage> {
 
   Future<void> _openCreate() async {
     await openTodoEditPage(context);
+  }
+
+  void _openFutureLetters() {
+    Navigator.of(context).push(
+      AppPageRoute<void>(builder: (_) => const FutureLettersPage()),
+    );
+  }
+
+  void _openImportantDays() {
+    Navigator.of(context).push(
+      AppPageRoute<void>(builder: (_) => const ImportantDaysPage()),
+    );
   }
 
   Future<void> _openHorizonStats() async {
@@ -179,11 +194,6 @@ class _TodoListPageState extends State<TodoListPage> {
       return;
     }
 
-    final earned = EchoCollectibleService.instance.takeLastEarned();
-    if (earned != null && mounted) {
-      showCollectibleEarnedSnack(context, earned);
-    }
-
     if (updated.isPermanentlyCompleted) {
       await TodoNotificationService.instance.cancel(todo.id);
       return;
@@ -192,14 +202,10 @@ class _TodoListPageState extends State<TodoListPage> {
     await _syncNotification(updated);
     if (!mounted || updated.repeat == TodoRepeat.none) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${TodoCopy.nextReminder} · ${_formatTime(updated.reminderAt)}',
-          style: TextStyle(fontWeight: FontWeight.w300),
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
+    showEchoBriefHint(
+      context,
+      message: '${TodoCopy.nextReminder} · ${_formatTime(updated.reminderAt)}',
+      tone: EchoBriefHintTone.success,
     );
   }
 
@@ -243,32 +249,32 @@ class _TodoListPageState extends State<TodoListPage> {
       context: context,
       actions: [
         if (todo.isSleeping)
-          const EchoActionSheetItem(label: TodoCopy.wake, value: 'wake'),
+          EchoActionSheetItem(label: TodoCopy.wake, value: 'wake'),
         if (todo.isDoneForDisplay(now) || todo.isPermanentlyCompleted)
-          const EchoActionSheetItem(label: TodoCopy.toDiary, value: 'diary'),
+          EchoActionSheetItem(label: TodoCopy.toDiary, value: 'diary'),
         if (!todo.isDoneForDisplay(now) && !todo.isSleeping)
-          const EchoActionSheetItem(label: TodoCopy.markDone, value: 'done'),
+          EchoActionSheetItem(label: TodoCopy.markDone, value: 'done'),
         if (_filterMode == TodoListFilterMode.all && !todo.isImportant)
-          const EchoActionSheetItem(
+          EchoActionSheetItem(
             label: TodoCopy.moveToImportant,
             value: 'important',
           ),
         if (todo.isImportant &&
             (_filterMode == TodoListFilterMode.all ||
                 _filterMode == TodoListFilterMode.important))
-          const EchoActionSheetItem(
+          EchoActionSheetItem(
             label: TodoCopy.removeFromImportant,
             value: 'unimportant',
           ),
-        const EchoActionSheetItem(label: TodoCopy.edit, value: 'edit'),
+        EchoActionSheetItem(label: TodoCopy.edit, value: 'edit'),
         if (!todo.isDoneForDisplay(now) &&
             !todo.isSleeping &&
             todo.isExpired(now))
-          const EchoActionSheetItem(
+          EchoActionSheetItem(
             label: TodoCopy.reschedule,
             value: 'reschedule',
           ),
-        const EchoActionSheetItem(
+        EchoActionSheetItem(
           label: TodoCopy.delete,
           value: 'delete',
           isDestructive: true,
@@ -297,7 +303,7 @@ class _TodoListPageState extends State<TodoListPage> {
         final confirm = await showEchoActionSheet<bool>(
           context: context,
           message: TodoCopy.deleteConfirm,
-          actions: const [
+          actions: [
             EchoActionSheetItem(
               label: TodoCopy.delete,
               value: true,
@@ -313,7 +319,7 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   String _formatTime(DateTime dt) {
-    return '${dt.month}月${dt.day}日 · ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '${DiaryFormat.listDateLabel(dt)} · ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   List<TodoReminder> _filterCategory(List<TodoReminder> items) {
@@ -361,7 +367,7 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   String _horizonNavTitle(DateTime now) {
-    return '${_horizon.label} · ${TodoSchedule.horizonStatsRangeLabel(_horizon, now)}';
+    return '${_horizon.localizedLabel} · ${TodoSchedule.horizonStatsRangeLabel(_horizon, now)}';
   }
 
   @override
@@ -383,29 +389,29 @@ class _TodoListPageState extends State<TodoListPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ScaleTap(
+                      EchoHeaderAction(
+                        icon: Icons.insights_outlined,
+                        accent: EchoColors.headerInsights,
                         onTap: _openHorizonStats,
-                        scale: 0.9,
-                        child: Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.insights_outlined,
-                            size: 22,
-                            color: EchoColors.dayTextSecondary,
-                          ),
-                        ),
                       ),
-                      ScaleTap(
+                      const SizedBox(width: 8),
+                      EchoHeaderAction(
+                        icon: Icons.mail_outline_rounded,
+                        accent: EchoColors.headerMail,
+                        onTap: _openFutureLetters,
+                      ),
+                      const SizedBox(width: 8),
+                      EchoHeaderAction(
+                        icon: Icons.event_outlined,
+                        accent: EchoColors.headerEvent,
+                        onTap: _openImportantDays,
+                      ),
+                      const SizedBox(width: 8),
+                      EchoHeaderAction(
+                        icon: Icons.add,
+                        accent: EchoColors.headerCreate,
+                        iconSize: 22,
                         onTap: _openCreate,
-                        scale: 0.92,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(4, 8, 0, 8),
-                          child: Icon(
-                            Icons.add,
-                            size: 24,
-                            color: EchoColors.dayTextPrimary,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -672,7 +678,7 @@ class _TodoStatusList extends StatelessWidget {
       }
     } else {
       if (rest.isNotEmpty && expired.isNotEmpty) {
-        children.add(_SectionLabel(horizon.label));
+        children.add(_SectionLabel(horizon.localizedLabel));
       }
       for (final todo in rest) {
         children.add(_buildCard(todo));
@@ -732,15 +738,23 @@ class _TodoStatusList extends StatelessWidget {
   }
 
   String get _emptyMessage {
-    if (importantFiltered) return '还没有标记为重要的待办';
-    if (categoryFiltered) return '这一分类还没有待办';
+    if (importantFiltered) {
+      return tr('还没有标记为重要的待办', 'No important tasks yet');
+    }
+    if (categoryFiltered) {
+      return tr('这一分类还没有待办', 'No tasks in this category yet');
+    }
     if (tab == TodoListTab.sleeping) return TodoCopy.emptySleeping;
-    if (tab == TodoListTab.completed) return '这一段时间还没有安放的待办';
+    if (tab == TodoListTab.completed) {
+      return tr('这一段时间还没有安放的待办', 'No completed tasks in this period');
+    }
     return switch (horizon) {
       TodoTimeHorizon.today => TodoCopy.emptyPending,
-      TodoTimeHorizon.thisWeek => '这一段时间还没有安排',
-      TodoTimeHorizon.thisMonth => '这一段时间还没有安排',
-      TodoTimeHorizon.future => '还没有远期规划',
+      TodoTimeHorizon.thisWeek ||
+      TodoTimeHorizon.thisMonth =>
+        tr('这一段时间还没有安排', 'Nothing scheduled in this period'),
+      TodoTimeHorizon.future =>
+        tr('还没有远期规划', 'No long-term plans yet'),
     };
   }
 

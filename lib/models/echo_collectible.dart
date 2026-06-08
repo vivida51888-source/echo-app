@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 回响拾遗：情绪小铺可收集的纪念物。
 enum EchoCollectibleKind {
   focusFlower,
@@ -16,21 +18,36 @@ enum EchoCollectibleKind {
 
 extension EchoCollectibleKindX on EchoCollectibleKind {
   String get name => switch (this) {
-        EchoCollectibleKind.focusFlower => '专注之花',
-        EchoCollectibleKind.timeSeed => '时间种子',
-        EchoCollectibleKind.resonanceShell => '共鸣贝壳',
+        EchoCollectibleKind.focusFlower => tr('专注之花', 'Focus flower'),
+        EchoCollectibleKind.timeSeed => tr('时间种子', 'Time seed'),
+        EchoCollectibleKind.resonanceShell =>
+          tr('共鸣贝壳', 'Resonance shell'),
       };
 
   String get shopHint => switch (this) {
-        EchoCollectibleKind.focusFlower => '连续完成待办，会生长出专注之花',
-        EchoCollectibleKind.timeSeed => '在未来信箱里存一封信，立刻得到时间种子',
-        EchoCollectibleKind.resonanceShell => '拾起漂流瓶并给予回响，获得共鸣贝壳',
+        EchoCollectibleKind.focusFlower => tr(
+              '连续完成待办，会生长出专注之花',
+              'Complete tasks on a streak to grow a focus flower',
+            ),
+        EchoCollectibleKind.timeSeed => tr(
+              '在未来信箱里存一封信，立刻得到时间种子',
+              'Seal a letter in Future Mail to earn a time seed',
+            ),
+        EchoCollectibleKind.resonanceShell => tr(
+              '拾起漂流瓶并给予回响，获得共鸣贝壳',
+              'Reply to a drift bottle to earn a resonance shell',
+            ),
       };
 
   String get earnDetail => switch (this) {
-        EchoCollectibleKind.focusFlower => '连续 3 / 7 / 14 天完成待办',
-        EchoCollectibleKind.timeSeed => '每封存一封信',
-        EchoCollectibleKind.resonanceShell => '每次给予漂流瓶回响',
+        EchoCollectibleKind.focusFlower => tr(
+              '连续 3 / 7 / 14 天完成待办',
+              '3 / 7 / 14-day task streaks',
+            ),
+        EchoCollectibleKind.timeSeed =>
+          tr('每封存一封信', 'Each sealed letter'),
+        EchoCollectibleKind.resonanceShell =>
+          tr('每次给予漂流瓶回响', 'Each drift bottle reply'),
       };
 
   IconData get icon => switch (this) {
@@ -73,8 +90,12 @@ class EchoCollectibleItem {
   String get displayName {
     if (kind == EchoCollectibleKind.focusFlower) {
       final days = streakDays ?? 0;
-      if (days >= 14) return '专注之花·珍';
-      if (days >= 7) return '专注之花·稀';
+      if (days >= 14) {
+        return tr('专注之花·珍', 'Focus flower · Rare');
+      }
+      if (days >= 7) {
+        return tr('专注之花·稀', 'Focus flower · Special');
+      }
       return kind.name;
     }
     return kind.name;

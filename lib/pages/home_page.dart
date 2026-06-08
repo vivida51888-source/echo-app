@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../data/daily_quotes.dart';
 import '../l10n/echo_strings.dart';
+import '../l10n/localized.dart';
 import '../services/diary_draft_service.dart';
 import '../services/diary_service.dart';
-import '../services/echo_mood_book_service.dart';
 import '../services/future_letter_service.dart';
 import '../services/important_day_service.dart';
 import '../services/locale_service.dart';
@@ -16,6 +16,12 @@ import '../utils/drift_bottle_schedule.dart';
 import '../utils/home_moment.dart';
 import '../widgets/drift_bottle.dart';
 import '../widgets/echo_controls.dart';
+import '../pages/keepsakes_page.dart';
+import '../pages/mood_bookshelf_page.dart';
+import '../services/echo_check_in_service.dart';
+import '../services/echo_reward_service.dart';
+import '../widgets/echo_check_in_sheet.dart';
+import '../widgets/echo_count_badge.dart';
 import '../widgets/echo_page_header.dart';
 import '../widgets/echo_themed_scope.dart';
 import '../widgets/scale_tap.dart';
@@ -51,7 +57,59 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EchoPageHeader(title: s.momentTitle),
+                EchoPageHeader(
+                  title: s.momentTitle,
+                  trailing: ListenableBuilder(
+                    listenable: Listenable.merge([
+                      EchoCheckInService.instance,
+                      EchoRewardService.instance,
+                    ]),
+                    builder: (context, _) {
+                      final checkIn = EchoCheckInService.instance;
+                      final rewards = EchoRewardService.instance;
+                      final canCheckIn =
+                          checkIn.canCheckInToday || checkIn.canMakeUpToday;
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          EchoCountBadge(
+                            count: canCheckIn ? 1 : 0,
+                            size: 8,
+                            offset: const Offset(1, 1),
+                            child: EchoHeaderAction(
+                              icon: Icons.card_giftcard_outlined,
+                              accent: EchoColors.headerCheckIn,
+                              onTap: () => showEchoCheckInSheet(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          EchoCountBadge(
+                            count: rewards.unreadAchievementCount,
+                            size: 8,
+                            offset: const Offset(1, 1),
+                            child: EchoHeaderAction(
+                              icon: Icons.storefront_outlined,
+                              accent: EchoColors.headerShop,
+                              onTap: () => openKeepsakesPage(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          EchoHeaderAction(
+                            icon: Icons.menu_book_outlined,
+                            accent: EchoColors.headerBookshelf,
+                            onTap: () {
+                              if (onReviewPast != null) {
+                                onReviewPast!();
+                              } else {
+                                showMoodBookshelfSheet(context);
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
                 Expanded(
                   child: ListenableBuilder(
                     listenable: Listenable.merge([
@@ -59,12 +117,11 @@ class HomePage extends StatelessWidget {
                       DiaryDraftService.instance,
                       ImportantDayService.instance,
                       FutureLetterService.instance,
-                      EchoMoodBookService.instance,
                     ]),
                     builder: (context, _) {
                       final phrase = s.dailyPhrase(now);
                       final moment = HomeMoment.snapshot();
-                      final quote = DailyQuotes.forDate(now);
+                      final quote = s.isEn ? null : DailyQuotes.forDate(now);
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(
@@ -89,11 +146,8 @@ class HomePage extends StatelessWidget {
                               action: moment.action,
                               quote: quote,
                               strings: s,
-                              bookshelfTitle:
-                                  EchoMoodBookService.instance.bookshelfTitle,
                               onWriteToday: onWriteToday ?? () {},
                               onViewToday: onViewToday ?? onWriteToday ?? () {},
-                              onReviewPast: onReviewPast ?? () {},
                               whisper: whisper,
                             ),
                             const SizedBox(height: EchoSpacing.xxxl),
@@ -217,31 +271,37 @@ class _MomentActions extends StatelessWidget {
     required this.action,
     required this.quote,
     required this.strings,
-    required this.bookshelfTitle,
     required this.onWriteToday,
     required this.onViewToday,
-    required this.onReviewPast,
     required this.whisper,
   });
 
   final bool dualTone;
   final HomeMomentAction action;
-  final DailyQuote quote;
+  final DailyQuote? quote;
   final EchoStrings strings;
-  final String bookshelfTitle;
   final VoidCallback onWriteToday;
   final VoidCallback onViewToday;
-  final VoidCallback onReviewPast;
   final Color whisper;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (action == HomeMomentAction.showQuote)
+        if (action == HomeMomentAction.showQuote && quote != null)
           _DailyQuoteCard(
-            quote: quote,
+            quote: quote!,
             onTap: onViewToday,
+          )
+        else if (action == HomeMomentAction.showQuote)
+          Center(
+            child: EchoPrimaryButton(
+              label: tr('查看今天', 'View today'),
+              tone: dualTone
+                  ? EchoPrimaryButtonTone.night
+                  : EchoPrimaryButtonTone.day,
+              onTap: onViewToday,
+            ),
           )
         else
           Center(
@@ -255,26 +315,6 @@ class _MomentActions extends StatelessWidget {
               onTap: onWriteToday,
             ),
           ),
-        const SizedBox(height: EchoSpacing.lg),
-        Center(
-          child: ScaleTap(
-            onTap: onReviewPast,
-            scale: 0.98,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: EchoSpacing.sm,
-                vertical: EchoSpacing.xs,
-              ),
-              child: Text(
-                strings.reviewPastWithBookshelf(bookshelfTitle),
-                style: EchoTypography.caption.copyWith(
-                  color: whisper,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/diary_stationery.dart';
+import 'echo_reward_service.dart';
 
 class DiaryStationeryService extends ChangeNotifier {
   DiaryStationeryService._();
@@ -17,7 +18,7 @@ class DiaryStationeryService extends ChangeNotifier {
 
   bool get isReady => _ready;
   DiaryStationery get current => _current;
-  String get currentName => _current.name;
+  String get currentName => _current.localizedName;
 
   Future<void> init() async {
     if (_ready) return;
@@ -29,6 +30,7 @@ class DiaryStationeryService extends ChangeNotifier {
 
   Future<void> setStationery(DiaryStationery value) async {
     if (_current.id == value.id) return;
+    if (!EchoRewardService.instance.isStationeryUnlocked(value.id)) return;
     _current = value;
     await _box?.put(_presetKey, value.id);
     notifyListeners();

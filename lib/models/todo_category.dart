@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/localized.dart';
+
 /// 待办生活分类（少量、覆盖日常基本场景）。
 enum TodoCategory {
   life('生活', Icons.home_outlined, Color(0xFFB8956A)),
@@ -22,4 +24,12 @@ enum TodoCategory {
       orElse: () => TodoCategory.life,
     );
   }
+
+  String get localizedLabel => switch (this) {
+        TodoCategory.life => tr('生活', 'Life'),
+        TodoCategory.health => tr('健康', 'Health'),
+        TodoCategory.work => tr('工作', 'Work'),
+        TodoCategory.social => tr('社交', 'Social'),
+        TodoCategory.self => tr('学习', 'Study'),
+      };
 }

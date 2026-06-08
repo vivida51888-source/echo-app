@@ -18,7 +18,7 @@ class EchoAppearanceService extends ChangeNotifier {
 
   bool get isReady => _ready;
   EchoAppearancePreset get preset => _preset;
-  String get presetName => _preset.name;
+  String get presetName => _preset.localizedName;
 
   Future<void> init() async {
     if (_ready) return;
