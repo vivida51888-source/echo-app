@@ -175,8 +175,9 @@
       <div class="card">
         <h3>本地优先</h3>
         <p>
-          无需注册账号，默认不上传日记到服务器。日记、图片、待办、信件、重要日及各项设置，
+          无需注册账号。<strong>私人日记默认不上传服务器</strong>——回响、图片、待办、信件、重要日及各项设置
           均存放在应用私有目录，仅本应用可访问。
+          只有在你<strong>主动选择「发布到发现」</strong>时，才会将本条回响的公开摘要上传到云端（见下文「发现」）。
         </p>
       </div>
 
@@ -194,12 +195,30 @@
         </ul>
       </div>
 
+      <div class="card" id="discover-zh">
+        <h3>发现（Discover）</h3>
+        <p>
+          「发现」是可选的公开社交功能。只有你点击「发布到发现」时，才会上传内容；未发布的私人日记始终保留在本机。
+        </p>
+        <ul>
+          <li><strong>上传内容</strong>：回响正文摘要、心情、模糊地点标签（不含精确 GPS）、你选择的图片/音频/视频副本</li>
+          <li><strong>展示信息</strong>：你在设置中填写的昵称与头像；若未设置则显示匿名昵称与默认头像</li>
+          <li><strong>设备标识</strong>：为区分用户与传递互动，会为每台设备生成匿名设备 ID（UUID），不关联手机号或邮箱</li>
+          <li><strong>互动数据</strong>：他人对你发布内容的点赞与评论会保存在云端，并同步到你的「我的」动态</li>
+          <li><strong>存储位置</strong>：Cloudflare Workers / D1 / R2（由开发者运营），用于公开展示与互动</li>
+          <li><strong>你的控制</strong>：可随时取消发布、删除自己的评论；可举报或屏蔽其他用户；屏蔽名单在设置中管理</li>
+        </ul>
+        <p style="margin-top:0.75rem">
+          社区规范见<a href="terms.html#community-zh">服务条款 · 发现与社区规范</a>。
+        </p>
+      </div>
+
       <div class="card">
         <h3>我们不会</h3>
         <ul>
           <li>出售或出租你的个人数据</li>
           <li>将日记用于广告或用户画像</li>
-          <li>未经你操作批量上传内容</li>
+          <li>未经你操作上传私人日记（发布到发现除外，且须你主动确认）</li>
           <li>向第三方共享可识别身份的私人记录</li>
         </ul>
       </div>
@@ -209,11 +228,20 @@
         <ul>
           <li>通知（可选）：待办、未来来信、重要日提醒</li>
           <li>相册 / 相机（可选）：添加图片、自定义照片墙；导出图片到相册需授权</li>
-          <li>位置（可选）：仅在你为日记点击「添加当前位置」时使用，坐标与地名存于本机</li>
+          <li>位置（可选）：精确坐标仅保存在本机；发布到发现时仅上传模糊地点标签，不上传精确 GPS</li>
           <li>指纹（可选）：仅用于应用锁本地验证，不上传</li>
           <li>精确闹钟（可选）：用于待办准时提醒</li>
-          <li>网络：仅用于 Google Play 购买与恢复 Echo Plus</li>
+          <li>网络：Google Play 购买与恢复 Echo Plus；发现功能的发布、浏览与互动；可选 Firebase Analytics（见下）</li>
         </ul>
+      </div>
+
+      <div class="card">
+        <h3>Firebase Analytics（可选）</h3>
+        <p>
+          我们可能使用 Google Firebase Analytics 收集匿名使用数据（如应用打开、会员状态 tier），
+          <strong>不包含</strong>日记正文、标签、位置或发现帖内容。
+          数据由 Google 处理，受其隐私政策约束。你可以在系统设置中限制广告/analytics 跟踪。
+        </p>
       </div>
 
       <div class="card">
@@ -253,11 +281,11 @@
         <h3>说明更新</h3>
         <p>
           功能变更时可能更新本说明，重要变更会在应用内提示。
-          最近更新：2026 年 5 月。
+          最近更新：2026 年 7 月（新增「发现」功能说明）。
         </p>
       </div>
 
-      <p class="meta">Echo 用于记录文字、心情与照片，数据默认保存在本机。</p>
+      <p class="meta">Echo 用于记录文字、心情与照片；私人数据默认保存在本机，发现为可选公开功能。</p>
     </section>
 
     <!-- ── English ──────────────────────────────────────── -->
@@ -268,9 +296,10 @@
       <div class="card">
         <h3>Local-first</h3>
         <p>
-          No account is required. By default, your journal entries are not uploaded to any server.
+          No account is required. <strong>Private journal entries are not uploaded by default.</strong>
           Diaries, photos, to-dos, letters, important days, and app settings are stored in the
           app’s private storage and are accessible only to Echo on your device.
+          Content is uploaded only when you <strong>choose “Publish to Discover”</strong> (see Discover below).
         </p>
       </div>
 
@@ -288,12 +317,31 @@
         </ul>
       </div>
 
+      <div class="card" id="discover-en">
+        <h3>Discover (optional social feature)</h3>
+        <p>
+          Discover is optional. Nothing is uploaded until you tap <strong>Publish to Discover</strong>.
+          Unpublished private entries stay on your device only.
+        </p>
+        <ul>
+          <li><strong>Uploaded content</strong>: entry summary text, mood, fuzzy place label (not precise GPS), and media you include</li>
+          <li><strong>Public profile</strong>: nickname and avatar from Settings, or an anonymous default if unset</li>
+          <li><strong>Device ID</strong>: an anonymous UUID per device to enable interactions — not linked to phone or email</li>
+          <li><strong>Interactions</strong>: likes and comments on your posts are stored in the cloud and synced to your “Mine” feed</li>
+          <li><strong>Hosting</strong>: Cloudflare Workers / D1 / R2, operated by the developer</li>
+          <li><strong>Your controls</strong>: unpublish anytime, delete your replies, report or block users, manage blocked authors in Settings</li>
+        </ul>
+        <p style="margin-top:0.75rem">
+          See <a href="terms.html#community-en">Terms · Discover &amp; community guidelines</a>.
+        </p>
+      </div>
+
       <div class="card">
         <h3>What we do not do</h3>
         <ul>
           <li>Sell or rent your personal data</li>
           <li>Use your journal for advertising or profiling</li>
-          <li>Batch-upload your content without your action</li>
+          <li>Upload private entries without your action (Discover requires your explicit consent)</li>
           <li>Share personally identifiable private records with third parties</li>
         </ul>
       </div>
@@ -303,11 +351,20 @@
         <ul>
           <li>Notifications (optional): to-do, future letter, and important-day reminders</li>
           <li>Photos / Camera (optional): add images, customize the photo wall; saving exports to the gallery requires permission</li>
-          <li>Location (optional): only when you tap “Add current location” on an entry; stored on device</li>
+          <li>Location (optional): precise coordinates stay on device; Discover publishes a fuzzy place label only, not precise GPS</li>
           <li>Fingerprint (optional): app lock only, verified on device, never uploaded</li>
           <li>Exact alarms (optional): on-time task reminders</li>
-          <li>Internet: Google Play purchases &amp; Echo Plus restore only</li>
+          <li>Internet: Google Play &amp; Echo Plus; Discover publish/browse/interactions; optional Firebase Analytics (below)</li>
         </ul>
+      </div>
+
+      <div class="card">
+        <h3>Firebase Analytics (optional)</h3>
+        <p>
+          We may use Google Firebase Analytics for anonymous usage metrics (e.g. app opens, membership tier).
+          It does <strong>not</strong> include journal text, tags, location, or Discover post content.
+          Google processes this data under its privacy policy. You can limit ad/analytics tracking in system settings.
+        </p>
       </div>
 
       <div class="card">
@@ -348,12 +405,12 @@
         <h3>Updates to this policy</h3>
         <p>
           We may update this policy when features change. Material changes will be communicated
-          in the app when possible. Last updated: May 2026.
+          in the app when possible. Last updated: July 2026 (Discover feature added).
         </p>
       </div>
 
       <p class="meta">
-        Echo is a personal journal for text, mood, and photos. Your data stays on your device by default.
+        Echo is a personal journal for text, mood, and photos. Private data stays on your device by default; Discover is optional.
       </p>
     </section>
 
@@ -372,7 +429,7 @@
   </main>
 
   <footer>
-  Echo · v1.0.0 · Last updated May 2026 / 最近更新 2026 年 5 月
+  Echo · v1.0.0 · Last updated July 2026 / 最近更新 2026 年 7 月
   </footer>
 </body>
 </html>
